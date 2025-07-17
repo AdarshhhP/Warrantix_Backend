@@ -7,5 +7,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class CompanyResourseMgtApplication {
     public static void main(String[] args) {
         SpringApplication.run(CompanyResourseMgtApplication.class, args);
+        //sample change
     }
 }
