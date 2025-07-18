@@ -173,10 +173,11 @@ public class CustomerService implements ICustomerService  {
     
     @Transactional
     @Override
-    public PostResponse WarrantyAction(@RequestParam Integer purchase_id,@RequestParam Integer status) {
+    public PostResponse WarrantyAction(@RequestParam Integer purchase_id , @RequestParam Integer status, @RequestParam(required = false) String rejection_remarks) {
 	    PostResponse response = new PostResponse();
-    	Integer p = companyviewrepository.WarrantyAction(purchase_id,status);
-    	if(p>0) {
+	    
+    	Integer p = companyviewrepository.WarrantyAction(purchase_id,status,rejection_remarks);
+       	if(p>0) {
     		response.setStatusCode(200);
     		response.setMessage("Updated");
     	}else {

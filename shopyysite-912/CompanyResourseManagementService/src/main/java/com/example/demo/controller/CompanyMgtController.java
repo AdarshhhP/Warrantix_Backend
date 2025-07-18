@@ -43,8 +43,8 @@ public class CompanyMgtController {
 	}
 	
 	@PostMapping(value = "/bulkupload-products", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public BulkUploadResponse bulkUploadProducts(@RequestParam("file") MultipartFile postedFile) {
-	    return service.bulkUploadProducts(postedFile);
+	public BulkUploadResponse bulkUploadProducts(@RequestParam("file") MultipartFile postedFile,@RequestParam Integer company_id) {
+	    return service.bulkUploadProducts(postedFile,company_id);
 	}
 
 	

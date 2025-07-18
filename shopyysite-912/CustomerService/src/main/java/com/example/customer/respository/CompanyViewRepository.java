@@ -20,8 +20,8 @@ public interface CompanyViewRepository extends JpaRepository<CompanyView, Intege
 	 List<CompanyView> getRaisedWarrantyRequestsForCustomer(@RequestParam Integer userId);
 	
 	@Modifying
-	@Query("Update CompanyView c set c.warranty_status=:status where c.warranty_request_id=:purchase_id")
-	Integer WarrantyAction(@RequestParam Integer purchase_id,@RequestParam Integer status);
+	@Query("Update CompanyView c set c.warranty_status=:status , c.rejection_remark = :rejection_remarks where c.warranty_request_id=:purchase_id")
+	Integer WarrantyAction(@RequestParam Integer purchase_id,@RequestParam Integer status,@RequestParam(required=false) String rejection_remarks);
 	
 	@Modifying
 	@Query("UPDATE CompanyView c set c.isDeleted=1 where c.warranty_request_id=:raised_Id")

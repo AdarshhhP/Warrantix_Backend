@@ -25,5 +25,5 @@ public interface ICompanyMgtService {
 	public Boolean CheckEligibility(@RequestParam String Model_no,@RequestParam Integer checkvalue);
 	public BulkUploadResponse bulkUploadProducts(@Parameter(description = "File containing product data", 
             schema = @Schema(type = "string", format = "binary"))
-  @RequestParam("file") MultipartFile postedFile);
+  @RequestParam("file") MultipartFile postedFile,@RequestParam Integer company_id);
 }
