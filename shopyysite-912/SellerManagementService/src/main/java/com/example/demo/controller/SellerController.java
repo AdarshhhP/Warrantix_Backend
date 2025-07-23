@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -19,9 +20,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.model.InventoryItem;
 import com.example.demo.model.PurchaseTable;
+import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.PostResponse;
 import com.example.demo.service.ISellerService;
 
@@ -53,6 +56,17 @@ public class SellerController {
 	    PostResponse response = isellerservice.PostPurchase(purchaseItem);
 	    return ResponseEntity.ok(response);
 	}
+	
+	@PostMapping(value = "/bulkupload-purchase", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+	public BulkUploadResponse bulkUploadPurchase(@RequestParam("file") MultipartFile postedFile,@RequestParam Integer seller_id) {
+	    return isellerservice.bulkUploadPurchase(postedFile,seller_id);
+	}
+	
+	 @PostMapping(value = "/bulk-upload-inventory", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+     public BulkUploadResponse bulkUploadInventory(@RequestParam("file") MultipartFile file,
+                                                      @RequestParam("seller_id") Integer sellerId) {
+         return isellerservice.bulkUploadInventory(file, sellerId);
+     }
 
 	@PostMapping("/inventory")
 	public ResponseEntity<?> PostInventory(@Valid @RequestBody InventoryItem inventoryItem, BindingResult bindingResult) {
@@ -95,7 +109,6 @@ public class SellerController {
 		Integer categoryIdInt = (categoryId == null || categoryId.trim().isEmpty()) ? null : Integer.valueOf(categoryId);
 	    String modelNoSanitized = (modelNo == null || modelNo.trim().isEmpty()) ? null : modelNo.trim();
 	    Integer warrantyInt = (warranty == null || warranty.trim().isEmpty()) ? null : Integer.valueOf(warranty);
-System.out.println(categoryIdInt+"categoryIdInt");
 	    Pageable pageable = PageRequest.of(page, size);
 	    return isellerservice.GetAllInventory(Seller_Id, categoryIdInt, modelNoSanitized, warrantyInt, purchaseDate, pageable);
 	}

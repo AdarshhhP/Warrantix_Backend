@@ -343,6 +343,13 @@ public ProductDetails getProductDetailsByModelNo(@RequestParam String Model_no) 
 }
 
 @Override
+public ProductDetails getProductDetailsByModelNoImage(@RequestParam String Model_no) {
+	ProductDetails Pd = companyMgtRepository.getProductDetailsByModelNo(Model_no);
+	Pd.setProductImages(new ArrayList<>());
+	return Pd;
+}
+
+@Override
 public List<ProductDetails> getProductsByModelNos(@RequestParam List<String> modelNos){
 	return companyMgtRepository.getProductsByModelNos(modelNos);
 }

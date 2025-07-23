@@ -1,22 +1,38 @@
 package com.example.demo.service;
 
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.model.InventoryItem;
 import com.example.demo.model.PurchaseTable;
 import com.example.demo.repository.PurchaseRepository;
 import com.example.demo.repository.SellerRepository;
+import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.PostResponse;
+import com.example.demo.response.ResponseModelData;
 
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -28,6 +44,9 @@ public class SellerService implements ISellerService {
 		this.sellerRepository=sellerRepository;
 		this.purchaseRepository=purchaseRepository;
 	}
+	
+	@Autowired
+	private RestTemplate restTemplate;
 	
 	@Transactional
 	public PostResponse PostInventory(InventoryItem inventoryItem) {
@@ -42,6 +61,351 @@ public class SellerService implements ISellerService {
 		}
 		return resp;
 	}
+	
+	
+	 @Override
+     public BulkUploadResponse bulkUploadInventory(MultipartFile file, Integer sellerId) {
+         BulkUploadResponse response = new BulkUploadResponse();
+         List<InventoryItem> validItems = new ArrayList<>();
+         List<String> successRows = new ArrayList<>();
+         List<String> failedRows = new ArrayList<>();
+         response.setSuccessRecords(successRows);
+         response.setFailedRecords(failedRows);
+
+         if (file == null || file.isEmpty()) {
+             response.setStatusCode(400);
+             response.setMessage("No file uploaded");
+             return response;
+         }
+
+         String fileName = file.getOriginalFilename();
+         String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+
+         if (!extension.equals(".xls") && !extension.equals(".xlsx")) {
+             response.setStatusCode(415);
+             response.setMessage("Only Excel files (.xls, .xlsx) are allowed");
+             return response;
+         }
+
+         try (InputStream is = file.getInputStream()) {
+             Workbook workbook = extension.equals(".xls") ? new HSSFWorkbook(is) : new XSSFWorkbook(is);
+             Sheet sheet = workbook.getSheetAt(0);
+             if (sheet == null || sheet.getLastRowNum() < 1) {
+                 response.setStatusCode(400);
+                 response.setMessage("Empty Excel file");
+                 return response;
+             }
+
+             Row headerRow = sheet.getRow(0);
+             if (!validateHeaderRow(headerRow)) {
+                 response.setStatusCode(400);
+                 response.setMessage("Invalid template headers");
+                 return response;
+             }
+
+             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+                 Row row = sheet.getRow(i);
+                 if (row == null) continue;
+
+                 String rowLabel = "Row " + (i + 1);
+                 try {
+                     InventoryItem item = parseInventoryRow(row, rowLabel, sellerId);
+                     validateItem(item, rowLabel);
+                     
+                     if(validateModelNoPurchases(item.getModel_no())!=true) {
+                     validItems.add(item);
+                     successRows.add(rowLabel + " added successfully");}
+                     else {
+                         failedRows.add(item.getModel_no()+" failed: " + "Item already exist");
+                     }
+                 } catch (Exception e) {
+                     failedRows.add(rowLabel + " failed: " + e.getMessage());
+                 }
+             }
+
+             if (!validItems.isEmpty()) {
+                 sellerRepository.saveAll(validItems);
+             }
+
+             response.setStatusCode(200);
+             response.setMessage(String.format("Upload completed. Success: %d, Failed: %d",
+                     successRows.size(), failedRows.size()));
+
+         } catch (Exception e) {
+             response.setStatusCode(500);
+             response.setMessage("Error reading Excel: " + e.getMessage());
+         }
+
+         return response;
+     }
+  
+     private boolean validateModelNoPurchases(String modelNo) {
+         List<InventoryItem> inventoryItem = sellerRepository.findAll();
+         
+         return inventoryItem.stream()
+                 .anyMatch(item -> item.getModel_no().equalsIgnoreCase(modelNo) && item.getIs_deleted() == 0);
+  
+     }
+     private boolean validateHeaderRow(Row row) {
+         return getCellValue(row, 0).equalsIgnoreCase("Model_no") &&
+                getCellValue(row, 1).equalsIgnoreCase("Warranty") &&
+                getCellValue(row, 2).equalsIgnoreCase("Purchase_date") &&
+                getCellValue(row, 3).equalsIgnoreCase("Price");
+     }
+
+     private InventoryItem parseInventoryRow(Row row, String rowLabel, Integer sellerId) throws Exception {
+    	  String modelNo = getCellValue(row, 0);
+
+    	    String url = "http://localhost:1089/getProductDetailsByModelNoNoimage?Model_no={modelNo}";
+
+    	    ResponseModelData response = restTemplate.getForObject(url, ResponseModelData.class, modelNo);
+    	    
+    	    
+         InventoryItem item = new InventoryItem();
+         try {
+             item.setModel_no(getCellValue(row, 0));
+             item.setCompany_id(response.getCompany_id());
+             item.setWarranty((int) Double.parseDouble(getCellValue(row, 1)));
+             String dateStr = getCellValue(row, 2);
+             item.setPurchase_date(LocalDate.parse(dateStr));
+             item.setPrice((int) Double.parseDouble(getCellValue(row, 3)));
+             String category=getCellValue(row, 2);
+             if(category=="Plastic") {
+                 item.setCategory_id(2);
+             }else if(category=="Electronics") {
+                 item.setCategory_id(1);
+             }else if(category=="Wood") {
+                 item.setCategory_id(3);
+             }else if(category=="Metal"){
+                 item.setCategory_id(4);
+             }else {
+                 item.setCategory_id(5);
+             }
+             item.setIs_deleted(0);
+             item.setSeller_id(sellerId);
+         } catch (Exception e) {
+             throw new Exception("Invalid data: " + e.getMessage());
+         }
+         return item;
+     }
+
+     private void validateItem(InventoryItem item, String rowLabel) throws Exception {
+         if (item.getModel_no() == null || item.getModel_no().isEmpty()) {
+             throw new Exception("Model_no is required");
+         }
+         if (item.getWarranty() == null || item.getWarranty() <= 0) {
+             throw new Exception("Warranty must be positive");
+         }
+     }
+
+//     private String getCellValue(Row row, int index) {
+//         Cell cell = row.getCell(index);
+//         if (cell == null) return "";
+//         return switch (cell.getCellType()) {
+//             case STRING -> cell.getStringCellValue().trim();
+//             case NUMERIC -> DateUtil.isCellDateFormatted(cell)
+//                 ? new SimpleDateFormat("yyyy-MM-dd").format(cell.getDateCellValue())
+//                 : String.valueOf(cell.getNumericCellValue());
+//             case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
+//             case FORMULA -> cell.getCellFormula();
+//             default -> "";
+//         };
+//     }
+	
+	
+	@Transactional
+	public BulkUploadResponse bulkUploadPurchase(@RequestParam("file") MultipartFile postedFile, @RequestParam Integer seller_id) {
+	    BulkUploadResponse response = new BulkUploadResponse();
+	    List<PurchaseTable> validPurchases = new ArrayList<>();
+	    List<String> successRows = new ArrayList<>();
+	    List<String> failedRows = new ArrayList<>();
+
+	    response.setSuccessRecords(successRows);
+	    response.setFailedRecords(failedRows);
+
+	    if (postedFile == null || postedFile.isEmpty()) {
+	        response.setStatusCode(400);
+	        response.setMessage("No file uploaded");
+	        return response;
+	    }
+
+	    String fileName = postedFile.getOriginalFilename();
+	    String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
+	    if (!extension.equals(".xls") && !extension.equals(".xlsx")) {
+	        response.setStatusCode(415);
+	        response.setMessage("Only Excel files (.xls, .xlsx) are allowed");
+	        return response;
+	    }
+
+	    try (InputStream is = postedFile.getInputStream()) {
+	        Workbook workbook = extension.equals(".xls") ? new HSSFWorkbook(is) : new XSSFWorkbook(is);
+	        Sheet sheet = workbook.getSheetAt(0);
+
+	        if (sheet == null || sheet.getLastRowNum() < 1) {
+	            response.setStatusCode(400);
+	            response.setMessage("Empty Excel file");
+	            return response;
+	        }
+
+	        Row headerRow = sheet.getRow(0);
+	        if (!validatePurchaseHeader(headerRow)) {
+	            response.setStatusCode(400);
+	            response.setMessage("Invalid template format. Please download the latest template.");
+	            return response;
+	        }
+
+	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+	            Row row = sheet.getRow(i);
+	            if (row == null) continue;
+
+	            String rowIdentifier = "Row " + (i + 1);
+	            try {
+	                PurchaseTable purchase = parsePurchaseRow(row, rowIdentifier, seller_id);
+	                validatePurchase(purchase, rowIdentifier);
+	               if( validateModelNos(purchase.getModelNo())==true) {
+	            	   
+	            	   if(validateModelNoPurchase(purchase.getModelNo())==true) {
+			                failedRows.add(purchase.getModelNo() + ": "+"This Model No already marked as sold");
+	            	   }else {
+	            	    successRows.add(purchase.getModelNo() + " - Ready for upload");
+	   	                validPurchases.add(purchase);
+	   	              String url = "http://localhost:1089/changeholderstatus?Model_no=" + purchase.getModelNo() + "&status=" + 3;
+	   	              restTemplate.postForObject(url, null, PostResponse.class);
+	            	   }
+	                }
+	               else {
+		                failedRows.add(purchase.getModelNo() + ": "+"This Model No not present in inventory");
+	               }
+	            } catch (Exception e) {
+	                failedRows.add(rowIdentifier + ": " + e.getMessage());
+	            }
+	        }
+
+	        if (!validPurchases.isEmpty()) {
+	            purchaseRepository.saveAll(validPurchases);
+	            successRows.replaceAll(s -> s.replace("Ready for upload", "Uploaded successfully"));
+	        }
+
+	        response.setStatusCode(200);
+	        response.setMessage(String.format(
+	            "Processed %d rows. Success: %d, Failed: %d",
+	            sheet.getLastRowNum(),
+	            validPurchases.size(),
+	            failedRows.size()
+	        ));
+
+	    } catch (Exception e) {
+	        response.setStatusCode(500);
+	        response.setMessage("Error processing file: " + e.getMessage());
+	    }
+
+	    return response;
+	}
+	
+	private boolean validateModelNoPurchase(String modelNo) {
+	    List<PurchaseTable> purchaseItems = purchaseRepository.findAll();
+	    
+	    return purchaseItems.stream()
+	            .anyMatch(item -> item.getModelNo().equalsIgnoreCase(modelNo) && item.getIs_deleted() == 0);
+
+	}
+	private boolean validateModelNos(String modelNo) {
+	    List<InventoryItem> inventoryItems = sellerRepository.findAll();
+
+	    return inventoryItems.stream()
+	            .anyMatch(item -> item.getModel_no().equalsIgnoreCase(modelNo) && item.getIs_deleted() == 0);
+	}
+
+
+	private boolean validatePurchaseHeader(Row headerRow) {
+	    if (headerRow == null) return false;
+	    return getCellValue(headerRow, 0).equalsIgnoreCase("Model_no") &&
+	           getCellValue(headerRow, 1).equalsIgnoreCase("Price") &&
+	           getCellValue(headerRow, 2).equalsIgnoreCase("Purchase_date") &&
+	           getCellValue(headerRow, 3).equalsIgnoreCase("Warranty") &&
+	           getCellValue(headerRow, 4).equalsIgnoreCase("Name") &&
+	           getCellValue(headerRow, 5).equalsIgnoreCase("Email") &&
+	           getCellValue(headerRow, 6).equalsIgnoreCase("Phono");
+	}
+
+	private PurchaseTable parsePurchaseRow(Row row, String rowIdentifier, Integer seller_id) throws Exception {
+	    PurchaseTable purchase = new PurchaseTable();
+
+	    try {
+	        purchase.setModelNo(getCellValue(row, 0));
+	        purchase.setPrice(parseIntSafe(getCellValue(row, 1), "Price"));
+
+	        String dateStr = getCellValue(row, 2);
+	        purchase.setPurchase_date(LocalDate.parse(dateStr)); // Format: yyyy-MM-dd (from getCellValue)
+
+	        purchase.setWarranty(parseIntSafe(getCellValue(row, 3), "Warranty"));
+	        purchase.setName(getCellValue(row, 4));
+	        purchase.setEmail(getCellValue(row, 5));
+	        purchase.setPhono(getCellValue(row, 6));
+	        purchase.setSeller_id(seller_id);
+	        purchase.setIs_deleted(0);
+
+	        return purchase;
+	    } catch (Exception e) {
+	        throw new Exception("Error parsing purchase data: " + e.getMessage());
+	    }
+	}
+
+	private void validatePurchase(PurchaseTable purchase, String rowIdentifier) throws Exception {
+	    if (purchase.getModelNo() == null || purchase.getModelNo().trim().isEmpty()) {
+	        throw new Exception("Model No is required");
+	    }
+
+	    if (purchase.getEmail() == null || !purchase.getEmail().matches("^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+	        throw new Exception("Invalid email format: " + purchase.getEmail());
+	    }
+
+	    if (purchase.getPrice() == null || purchase.getPrice() <= 0) {
+	        throw new Exception("Price must be a positive number");
+	    }
+
+	    if (purchase.getWarranty() == null || purchase.getWarranty() <= 0) {
+	        throw new Exception("Warranty must be a positive number");
+	    }
+
+	    if (purchase.getPurchase_date() == null) {
+	        throw new Exception("Purchase date is required and must be in yyyy-MM-dd format");
+	    }
+	}
+
+	private int parseIntSafe(String value, String fieldName) throws Exception {
+	    try {
+	        return Integer.parseInt(value);
+	    } catch (NumberFormatException e) {
+	        throw new Exception(fieldName + " must be a valid number");
+	    }
+	}
+
+	private String getCellValue(Row row, int cellIndex) {
+	    Cell cell = row.getCell(cellIndex);
+	    if (cell == null) return "";
+
+	    switch (cell.getCellType()) {
+	        case STRING:
+	            return cell.getStringCellValue().trim();
+	        case NUMERIC:
+	            if (DateUtil.isCellDateFormatted(cell)) {
+	                Date date = cell.getDateCellValue();
+	                return new SimpleDateFormat("yyyy-MM-dd").format(date);
+	            } else {
+	                return String.valueOf((int) cell.getNumericCellValue());
+	            }
+	        case BOOLEAN:
+	            return String.valueOf(cell.getBooleanCellValue());
+	        case FORMULA:
+	            return cell.getCellFormula();
+	        default:
+	            return "";
+	    }
+	}
+
+	
+	
 	
 	@Override
     public PostResponse PostPurchase(PurchaseTable purchaseItem) {
