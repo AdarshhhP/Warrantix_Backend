@@ -1,12 +1,18 @@
 package com.example.demo.service;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URL;
+import java.net.URLConnection;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Base64;
+
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
@@ -59,111 +65,219 @@ public class CompanyMgtService implements ICompanyMgtService {
 	    return response;
 	}
 	
-	public BulkUploadResponse bulkUploadProducts(MultipartFile postedFile) {
-	BulkUploadResponse response = new BulkUploadResponse();
+	public BulkUploadResponse bulkUploadProducts(MultipartFile postedFile,@RequestParam Integer company_id) {
+    BulkUploadResponse response = new BulkUploadResponse();
     List<ProductDetails> validProducts = new ArrayList<>();
-    List<String> succesRows = new ArrayList<>();
-
+    List<String> successRows = new ArrayList<>();
     List<String> failedRows = new ArrayList<>();
-    response.setSuccessRecords(succesRows);
+    
+    response.setSuccessRecords(successRows);
     response.setFailedRecords(failedRows);
 
+    // Validate file existence and type
     if (postedFile == null || postedFile.isEmpty()) {
-        response.setStatusCode(null);
-        response.setMessage(null);
+        response.setStatusCode(400);
+        response.setMessage("No file uploaded");
         return response;
     }
 
     String fileName = postedFile.getOriginalFilename();
-    String extension = fileName.substring(fileName.lastIndexOf("."));
+    String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
 
-    if (!extension.equalsIgnoreCase(".xls") && !extension.equalsIgnoreCase(".xlsx")) {
-        response.setStatusCode(null);
-        response.setMessage("Successfully Uploaded");
+    if (!extension.equals(".xls") && !extension.equals(".xlsx")) {
+        response.setStatusCode(415);
+        response.setMessage("Only Excel files (.xls, .xlsx) are allowed");
         return response;
     }
 
     try (InputStream is = postedFile.getInputStream()) {
-        Workbook workbook = extension.equalsIgnoreCase(".xls") ? new HSSFWorkbook(is) : new XSSFWorkbook(is);
+        Workbook workbook = extension.equals(".xls") ? new HSSFWorkbook(is) : new XSSFWorkbook(is);
         Sheet sheet = workbook.getSheetAt(0);
-        Row firstRow = sheet.getRow(0);
-
-        if (firstRow == null) {
-            response.setStatusCode(null);
-            response.setMessage("Empty Excel");
+        
+        if (sheet == null || sheet.getLastRowNum() < 1) {
+            response.setStatusCode(400);
+            response.setMessage("Empty Excel file");
             return response;
         }
 
-        // ✅ Validate header row (cell index matches expected header name)
-        if (!getCellValue(firstRow, 0).equalsIgnoreCase("Model_no") ||
-            !getCellValue(firstRow, 1).equalsIgnoreCase("Product_name") ||
-            !getCellValue(firstRow, 2).equalsIgnoreCase("Product_category") ||
-            !getCellValue(firstRow, 3).equalsIgnoreCase("Product_price") ||
-            !getCellValue(firstRow, 4).equalsIgnoreCase("Man_date") ||
-            !getCellValue(firstRow, 5).equalsIgnoreCase("Warrany_tenure") ||
-            !getCellValue(firstRow, 6).equalsIgnoreCase("Company_id")) {
-            
-            response.setStatusCode(509);;
-            response.setMessage("Invalid Template");
+        // Validate header row
+        Row headerRow = sheet.getRow(0);
+        if (!validateHeaderRow(headerRow)) {
+            response.setStatusCode(400);
+            response.setMessage("Invalid template format. Please download the latest template.");
             return response;
         }
 
-        // ✅ Parse data rows
+        // Process data rows
         for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             Row row = sheet.getRow(i);
             if (row == null) continue;
 
+            String rowIdentifier = "Row " + (i + 1);
             try {
-                ProductDetails product = new ProductDetails();
-                product.setModel_no(getCellValue(row, 0));
-                product.setProduct_name(getCellValue(row, 1));
-                product.setProduct_category(getCellValue(row, 2));
-                product.setProduct_price(Integer.parseInt(getCellValue(row, 3)));
+                ProductDetails product = parseProductRow(row, rowIdentifier,company_id);
+                validateProduct(product, rowIdentifier);
+                
+                // Process image URL if present
+                String imageUrls = getCellValue(row, 6); // Assuming column 8
+                if (imageUrls != null && !imageUrls.trim().isEmpty()) {
+                    String[] urlArray = imageUrls.split(",");
+                    System.out.println("" + urlArray);  // log success
 
-                String dateStr = getCellValue(row, 4);
-                LocalDate date = LocalDate.parse(dateStr); // You can add formatter if needed
-                product.setMan_date(date);
-
-                product.setWarrany_tenure(Integer.parseInt(getCellValue(row, 5)));
-                product.setCompany_id(Integer.parseInt(getCellValue(row, 6)));
-
-                product.setProductImages(new ArrayList<>());
-
-             // Simple validations
-                if (product.getModel_no() == null || product.getProduct_name() == null) {
-                    throw new IllegalArgumentException("Invalid Model No or Product Name");
-                } else {
-                    if (getProductDetailsByModelNo(product.getModel_no()) != null) {
-                        throw new IllegalArgumentException("Model No already exists: " + product.getModel_no());
+                    
+                    for (String url : urlArray) {
+                        if (!url.trim().isEmpty()) {
+                            processProductImage(product, url.trim(), rowIdentifier,failedRows);
+                        }
                     }
                 }
-                succesRows.add(product.getProduct_name() + "Added Successfully");
+                
+                successRows.add(product.getProduct_name() + " - Ready for upload");
                 validProducts.add(product);
             } catch (Exception e) {
-                failedRows.add("Row " + (i + 1) + ": " + e.getMessage());
+                failedRows.add(rowIdentifier + ": " + e.getMessage());
             }
         }
 
-        // ✅ Save valid products
-        companyMgtRepository.saveAll(validProducts);
-
-        // ✅ Response summary
-        response.setStatusCode(200);
-        response.setMessage("Upload completed. Success: " + validProducts.size() + ", Failed: " + failedRows.size());
-
-        if (!failedRows.isEmpty()) {
-            failedRows.forEach(System.out::println);
+        // Batch save valid products
+        if (!validProducts.isEmpty()) {
+            companyMgtRepository.saveAll(validProducts);
+            successRows.replaceAll(s -> s.replace("Ready for upload", "Uploaded successfully"));
         }
+
+        response.setStatusCode(200);
+        response.setMessage(String.format(
+            "Processed %d rows. Success: %d, Failed: %d",
+            sheet.getLastRowNum(),
+            validProducts.size(),
+            failedRows.size()
+        ));
 
     } catch (Exception e) {
         response.setStatusCode(500);
-        response.setMessage("Error reading Excel: " + e.getMessage());
+        response.setMessage("Error processing file: " + e.getMessage());
     }
 
     return response;
 }
 
-	
+// Helper Methods
+//to check if its a valid template
+private boolean validateHeaderRow(Row headerRow) {
+    if (headerRow == null) return false;
+    
+    return getCellValue(headerRow, 0).equalsIgnoreCase("Model_no") &&
+           getCellValue(headerRow, 1).equalsIgnoreCase("Product_name") &&
+           getCellValue(headerRow, 2).equalsIgnoreCase("Product_category") &&
+           getCellValue(headerRow, 3).equalsIgnoreCase("Product_price") &&
+           getCellValue(headerRow, 4).equalsIgnoreCase("Man_date") &&
+           getCellValue(headerRow, 5).equalsIgnoreCase("Warrany_tenure") &&
+           getCellValue(headerRow, 6).equalsIgnoreCase("Image_URL");
+}
+//to parse and return data in each row
+private ProductDetails parseProductRow(Row row, String rowIdentifier,Integer company_id) throws Exception {
+    ProductDetails product = new ProductDetails();
+    
+    try {
+        product.setModel_no(getCellValue(row, 0));
+        product.setProduct_name(getCellValue(row, 1));
+        
+//        product.setProduct_category(getCellValue(row, 2));
+        String category = getCellValue(row, 2).trim();
+        switch (category.toLowerCase()) {
+            case "plastic":
+                product.setProduct_category("2");
+                break;
+            case "electronics":
+                product.setProduct_category("1");
+                break;
+            case "wood":
+                product.setProduct_category("3");
+                break;
+            case "metal":
+                product.setProduct_category("4");
+                break;
+            default:
+                product.setProduct_category("unknown");
+                break;
+        }
+
+        
+        
+        
+        product.setProduct_price(parseIntSafe(getCellValue(row, 3), "Product Price"));
+        
+        String dateStr = getCellValue(row, 4);
+        product.setMan_date(dateStr);
+        
+        product.setWarrany_tenure(parseIntSafe(getCellValue(row, 5), "Warranty Tenure"));
+        product.setCompany_id(company_id);
+        product.setProductImages(new ArrayList<>());
+        
+        return product;
+    } catch (Exception e) {
+        throw new Exception("Error parsing product data: " + e.getMessage());
+    }
+}
+//cheking if warranty tenure is a valid date
+private int parseIntSafe(String value, String fieldName) throws Exception {
+    try {
+        return Integer.parseInt(value);
+    } catch (NumberFormatException e) {
+        throw new Exception(fieldName + " must be a valid number");
+    }
+}
+//adding validation so that making it mandatory modelNo product name fields are required
+private void validateProduct(ProductDetails product, String rowIdentifier) throws Exception {
+    if (product.getModel_no() == null || product.getModel_no().trim().isEmpty()) {
+        throw new Exception("Model No is required");
+    }
+    
+    if (product.getProduct_name() == null || product.getProduct_name().trim().isEmpty()) {
+        throw new Exception("Product Name is required");
+    }
+    
+    if (getProductDetailsByModelNo(product.getModel_no()) != null) {
+        throw new Exception("Model No already exists: " + product.getModel_no());
+    }
+    
+    // Add any additional validations here
+}
+
+private void processProductImage(ProductDetails product, String imageUrl, String rowIdentifier, List<String> failedRows) {
+    try {
+        String base64Image = downloadAndConvertToBase64(imageUrl);
+        product.getProductImages().add(base64Image);
+    } catch (Exception e) {
+        System.out.println(e.getMessage()+"erroe occured");
+
+        failedRows.add(rowIdentifier + ": Image download failed for URL " + imageUrl + " - " + e.getMessage());
+    }
+}
+
+private String downloadAndConvertToBase64(String imageUrl) throws IOException {
+    URL url = new URL(imageUrl);
+    URLConnection connection = url.openConnection();
+    connection.setConnectTimeout(115000); // 5 seconds
+    connection.setReadTimeout(110000); // 10 seconds
+    
+    try (InputStream in = connection.getInputStream()) {
+        byte[] imageBytes = in.readAllBytes();
+        
+        // Validate image size (max 8MB)
+        if (imageBytes.length > 8_000_000) {
+            throw new IOException("Image exceeds maximum size of 8MB");
+        }
+        
+        // Validate image type
+        String mimeType = URLConnection.guessContentTypeFromStream(new ByteArrayInputStream(imageBytes));
+        if (mimeType == null || !mimeType.startsWith("image/")) {
+            throw new IOException("Invalid image type: " + mimeType);
+        }
+        
+        return "data:" + mimeType + ";base64," + Base64.getEncoder().encodeToString(imageBytes);
+    }
+}
 	private String getCellValue(Row row, int cellIndex) {
 	    Cell cell = row.getCell(cellIndex);
 	    if (cell == null) return "";
@@ -193,6 +307,26 @@ public class CompanyMgtService implements ICompanyMgtService {
 	    }
 	}
 
+	
+	//private String getCellValue(Row row, int cellNum) {
+//  if (row == null) return null;
+//  Cell cell = row.getCell(cellNum, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+//  if (cell == null) return null;
+//  
+//  switch (cell.getCellType()) {
+//      case STRING:
+//          return cell.getStringCellValue().trim();
+//      case NUMERIC:
+//          if (DateUtil.isCellDateFormatted(cell)) {
+//              return cell.getLocalDateTimeCellValue().toLocalDate().toString();
+//          }
+//          return String.valueOf((int) cell.getNumericCellValue());
+//      case BOOLEAN:
+//          return String.valueOf(cell.getBooleanCellValue());
+//      default:
+//          return null;
+//  }
+//}
 
 
 
@@ -206,6 +340,13 @@ public class CompanyMgtService implements ICompanyMgtService {
 @Override
 public ProductDetails getProductDetailsByModelNo(@RequestParam String Model_no) {
 	return companyMgtRepository.getProductDetailsByModelNo(Model_no);
+}
+
+@Override
+public ProductDetails getProductDetailsByModelNoImage(@RequestParam String Model_no) {
+	ProductDetails Pd = companyMgtRepository.getProductDetailsByModelNo(Model_no);
+	Pd.setProductImages(new ArrayList<>());
+	return Pd;
 }
 
 @Override

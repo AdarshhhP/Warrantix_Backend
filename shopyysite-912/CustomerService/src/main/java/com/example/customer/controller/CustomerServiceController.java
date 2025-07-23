@@ -155,7 +155,7 @@ public class CustomerServiceController {
 	 }
 	 
 	 @GetMapping("/warranty-action")
-	 public PostResponse WarrantyAction(@RequestParam Integer purchase_id,@RequestParam Integer status) {
-		 return service.WarrantyAction(purchase_id,status);
+	 public PostResponse WarrantyAction(@RequestParam Integer purchase_id,@RequestParam Integer status , @RequestParam(required = false) String rejection_remarks) {
+		 return service.WarrantyAction(purchase_id,status,rejection_remarks);
 	 }
 }

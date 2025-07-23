@@ -30,7 +30,7 @@ public interface ICustomerService {
 	    
     CustomerDetails updateCustomer(Integer purchase_Id, CustomerDetails updatedCustomer);
     PostResponse deleteCustomer(Integer purchase_Id);
-    public PostResponse WarrantyAction(@RequestParam Integer purchase_id,@RequestParam Integer status);
+    public PostResponse WarrantyAction(@RequestParam Integer purchase_id , @RequestParam Integer status, @RequestParam(required = false) String rejection_remarks);
     public PostResponse deleteRaisedWarranty(@RequestParam Integer raised_Id);
 	
 }

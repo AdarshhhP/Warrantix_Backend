@@ -49,6 +49,16 @@ public class CompanyView {
     private Integer isDeleted=0;
     @NotBlank(message = "Reason required")
     private String reason;
+    
+    private String rejection_remark;
+    
+    
+    public String getRejection_remark() {
+		return rejection_remark;
+	}
+	public void setRejection_remark(String rejection_remark) {
+		this.rejection_remark = rejection_remark;
+	}
 
     public String getReason() {
     	return reason;

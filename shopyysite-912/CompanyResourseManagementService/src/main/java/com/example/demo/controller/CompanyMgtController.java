@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -43,8 +44,8 @@ public class CompanyMgtController {
 	}
 	
 	@PostMapping(value = "/bulkupload-products", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-	public BulkUploadResponse bulkUploadProducts(@RequestParam("file") MultipartFile postedFile) {
-	    return service.bulkUploadProducts(postedFile);
+	public BulkUploadResponse bulkUploadProducts(@RequestParam("file") MultipartFile postedFile,@RequestParam Integer company_id) {
+	    return service.bulkUploadProducts(postedFile,company_id);
 	}
 
 	
@@ -64,13 +65,18 @@ public class CompanyMgtController {
 	    String sanitizedModelNo = (ModelNo == null || ModelNo.trim().isEmpty()) ? "" : ModelNo.trim();
 
 
-	    Pageable pageable = PageRequest.of(page, size);
+	    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "prod_id"));
 	    return service.getProducts(company_id, holderStatus, sanitizedCategory,sanitizedModelNo, manDate, pageable);
 	}
 	
 	@GetMapping("/getProductDetailsByModelNo")
 	public ProductDetails getProductDetailsByModelNo(@RequestParam String Model_no) {
 		return service.getProductDetailsByModelNo(Model_no);
+	}
+	
+	@GetMapping("/getProductDetailsByModelNoNoimage")
+	public ProductDetails getProductDetailsByModelNoImage(@RequestParam String Model_no) {
+		return service.getProductDetailsByModelNoImage(Model_no);
 	}
 	
 	@PostMapping("/products/by-models")

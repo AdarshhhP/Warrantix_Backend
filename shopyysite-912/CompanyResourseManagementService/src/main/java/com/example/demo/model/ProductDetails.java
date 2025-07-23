@@ -42,8 +42,8 @@ import jakarta.persistence.Entity;
 			private Integer Product_price; 
 	
 			@NotNull(message = "Manufacture date is required")
-			@PastOrPresent(message = "Manufacture date cannot be in the future")
-			private LocalDate Man_date; 
+//			@PastOrPresent(message = "Manufacture date cannot be in the future")
+			private String Man_date; 
 	
 			@NotNull(message = "Warranty tenure is required")
 			@Min(value = 0, message = "Warranty tenure cannot be negative")
@@ -95,10 +95,10 @@ import jakarta.persistence.Entity;
 			public void setProduct_price(Integer product_price) {
 				Product_price = product_price;
 			}
-			public LocalDate getMan_date() {
+			public String getMan_date() {
 				return Man_date;
 			}
-			public void setMan_date(LocalDate man_date) {
+			public void setMan_date(String man_date) {
 				Man_date = man_date;
 			}
 			public Integer getWarrany_tenure() {
