@@ -48,6 +48,7 @@ public class SellerService implements ISellerService {
 	@Autowired
 	private RestTemplate restTemplate;
 	
+	// Add single inventory item
 	@Transactional
 	public PostResponse PostInventory(InventoryItem inventoryItem) {
 		InventoryItem item = sellerRepository.save(inventoryItem);
@@ -62,25 +63,26 @@ public class SellerService implements ISellerService {
 		return resp;
 	}
 	
-	
+	// Upload inventory in bulk from Excel
 	 @Override
      public BulkUploadResponse bulkUploadInventory(MultipartFile file, Integer sellerId) {
+		 // Initialize the response and supporting lists
          BulkUploadResponse response = new BulkUploadResponse();
-         List<InventoryItem> validItems = new ArrayList<>();
-         List<String> successRows = new ArrayList<>();
-         List<String> failedRows = new ArrayList<>();
+         List<InventoryItem> validItems = new ArrayList<>();  // Valid rows
+         List<String> successRows = new ArrayList<>();		  // Success messages
+         List<String> failedRows = new ArrayList<>(); 		 // Failed messages
          response.setSuccessRecords(successRows);
          response.setFailedRecords(failedRows);
-
+         // Check if file is null or empty
          if (file == null || file.isEmpty()) {
              response.setStatusCode(400);
              response.setMessage("No file uploaded");
              return response;
          }
-
+         // Get file name and extension	
          String fileName = file.getOriginalFilename();
          String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
-
+         // Check for allowed Excel extensions
          if (!extension.equals(".xls") && !extension.equals(".xlsx")) {
              response.setStatusCode(415);
              response.setMessage("Only Excel files (.xls, .xlsx) are allowed");
@@ -88,50 +90,56 @@ public class SellerService implements ISellerService {
          }
 
          try (InputStream is = file.getInputStream()) {
+        	// Load workbook based on file type
              Workbook workbook = extension.equals(".xls") ? new HSSFWorkbook(is) : new XSSFWorkbook(is);
              Sheet sheet = workbook.getSheetAt(0);
+             // If sheet is empty
              if (sheet == null || sheet.getLastRowNum() < 1) {
                  response.setStatusCode(400);
                  response.setMessage("Empty Excel file");
                  return response;
              }
-
+             // Validate header row (first row)
              Row headerRow = sheet.getRow(0);
              if (!validateHeaderRow(headerRow)) {
                  response.setStatusCode(400);
                  response.setMessage("Invalid template headers");
                  return response;
              }
-
+             // Process data rows from 2nd row onwards
              for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                  Row row = sheet.getRow(i);
-                 if (row == null) continue;
+                 if (row == null) continue; // Skip empty rows
 
                  String rowLabel = "Row " + (i + 1);
                  try {
+                	 // Parse row into InventoryItem object
                      InventoryItem item = parseInventoryRow(row, rowLabel, sellerId);
+                     // Validate content of the row
                      validateItem(item, rowLabel);
-                     
+                     // Check if item already exists (by model number)
                      if(validateModelNoPurchases(item.getModel_no())!=true) {
-                     validItems.add(item);
+                     validItems.add(item); // Add to valid list
                      successRows.add(rowLabel + " added successfully");}
                      else {
                          failedRows.add(item.getModel_no()+" failed: " + "Item already exist");
                      }
                  } catch (Exception e) {
+                	// Log parsing or validation errors for the row
                      failedRows.add(rowLabel + " failed: " + e.getMessage());
                  }
              }
-
+            // Save all valid items to the database
              if (!validItems.isEmpty()) {
                  sellerRepository.saveAll(validItems);
              }
-
+             // Final response message
              response.setStatusCode(200);
              response.setMessage(String.format("Upload completed. Success: %d, Failed: %d",
                      successRows.size(), failedRows.size()));
 
          } catch (Exception e) {
+        	// Handle any unexpected errors
              response.setStatusCode(500);
              response.setMessage("Error reading Excel: " + e.getMessage());
          }
@@ -139,6 +147,7 @@ public class SellerService implements ISellerService {
          return response;
      }
   
+	 // // Check if a model_no already exists in inventory
      private boolean validateModelNoPurchases(String modelNo) {
          List<InventoryItem> inventoryItem = sellerRepository.findAll();
          
@@ -146,6 +155,8 @@ public class SellerService implements ISellerService {
                  .anyMatch(item -> item.getModel_no().equalsIgnoreCase(modelNo) && item.getIs_deleted() == 0);
   
      }
+     
+     // Check if Excel header for inventory is valid
      private boolean validateHeaderRow(Row row) {
          return getCellValue(row, 0).equalsIgnoreCase("Model_no") &&
                 getCellValue(row, 1).equalsIgnoreCase("Warranty") &&
@@ -153,6 +164,7 @@ public class SellerService implements ISellerService {
                 getCellValue(row, 3).equalsIgnoreCase("Price");
      }
 
+     // Parse one row of Excel into InventoryItem object
      private InventoryItem parseInventoryRow(Row row, String rowLabel, Integer sellerId) throws Exception {
     	  String modelNo = getCellValue(row, 0);
 
@@ -189,6 +201,7 @@ public class SellerService implements ISellerService {
          return item;
      }
 
+     // Validate required fields of inventory
      private void validateItem(InventoryItem item, String rowLabel) throws Exception {
          if (item.getModel_no() == null || item.getModel_no().isEmpty()) {
              throw new Exception("Model_no is required");
@@ -212,7 +225,7 @@ public class SellerService implements ISellerService {
 //         };
 //     }
 	
-	
+	// Upload purchase data from Excel in bulk
 	@Transactional
 	public BulkUploadResponse bulkUploadPurchase(@RequestParam("file") MultipartFile postedFile, @RequestParam Integer seller_id) {
 	    BulkUploadResponse response = new BulkUploadResponse();
@@ -222,13 +235,13 @@ public class SellerService implements ISellerService {
 
 	    response.setSuccessRecords(successRows);
 	    response.setFailedRecords(failedRows);
-
+	    // Check if file is null or empty
 	    if (postedFile == null || postedFile.isEmpty()) {
 	        response.setStatusCode(400);
 	        response.setMessage("No file uploaded");
 	        return response;
 	    }
-
+	    // Get file extension and check if it's Excel
 	    String fileName = postedFile.getOriginalFilename();
 	    String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
 	    if (!extension.equals(".xls") && !extension.equals(".xlsx")) {
@@ -238,9 +251,10 @@ public class SellerService implements ISellerService {
 	    }
 
 	    try (InputStream is = postedFile.getInputStream()) {
+	    	// Create workbook depending on file type
 	        Workbook workbook = extension.equals(".xls") ? new HSSFWorkbook(is) : new XSSFWorkbook(is);
-	        Sheet sheet = workbook.getSheetAt(0);
-
+	        Sheet sheet = workbook.getSheetAt(0); // Get first sheet
+	        // Check for empty sheet
 	        if (sheet == null || sheet.getLastRowNum() < 1) {
 	            response.setStatusCode(400);
 	            response.setMessage("Empty Excel file");
@@ -253,20 +267,23 @@ public class SellerService implements ISellerService {
 	            response.setMessage("Invalid template format. Please download the latest template.");
 	            return response;
 	        }
-
+	        // Loop through rows starting from row 1
 	        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
 	            Row row = sheet.getRow(i);
 	            if (row == null) continue;
 
 	            String rowIdentifier = "Row " + (i + 1);
 	            try {
+	            	// Parse and validate the row
 	                PurchaseTable purchase = parsePurchaseRow(row, rowIdentifier, seller_id);
 	                validatePurchase(purchase, rowIdentifier);
+	                // Check if model number exists in inventory
 	               if( validateModelNos(purchase.getModelNo())==true) {
-	            	   
+	            	// Check if model number is already sold (exists in PurchaseTable)
 	            	   if(validateModelNoPurchase(purchase.getModelNo())==true) {
 			                failedRows.add(purchase.getModelNo() + ": "+"This Model No already marked as sold");
 	            	   }else {
+	            		// Add to valid list
 	            	    successRows.add(purchase.getModelNo() + " - Ready for upload");
 	   	                validPurchases.add(purchase);
 	   	              String url = "http://localhost:1089/changeholderstatus?Model_no=" + purchase.getModelNo() + "&status=" + 3;
@@ -280,12 +297,12 @@ public class SellerService implements ISellerService {
 	                failedRows.add(rowIdentifier + ": " + e.getMessage());
 	            }
 	        }
-
+	        // Save all valid purchase records to database
 	        if (!validPurchases.isEmpty()) {
 	            purchaseRepository.saveAll(validPurchases);
 	            successRows.replaceAll(s -> s.replace("Ready for upload", "Uploaded successfully"));
 	        }
-
+	        // Set final response message and status
 	        response.setStatusCode(200);
 	        response.setMessage(String.format(
 	            "Processed %d rows. Success: %d, Failed: %d",
@@ -302,6 +319,7 @@ public class SellerService implements ISellerService {
 	    return response;
 	}
 	
+	// Check if the model number is already sold
 	private boolean validateModelNoPurchase(String modelNo) {
 	    List<PurchaseTable> purchaseItems = purchaseRepository.findAll();
 	    
@@ -309,6 +327,8 @@ public class SellerService implements ISellerService {
 	            .anyMatch(item -> item.getModelNo().equalsIgnoreCase(modelNo) && item.getIs_deleted() == 0);
 
 	}
+	
+	// Check if model exists in inventory
 	private boolean validateModelNos(String modelNo) {
 	    List<InventoryItem> inventoryItems = sellerRepository.findAll();
 
@@ -316,7 +336,7 @@ public class SellerService implements ISellerService {
 	            .anyMatch(item -> item.getModel_no().equalsIgnoreCase(modelNo) && item.getIs_deleted() == 0);
 	}
 
-
+    // Validate purchase Excel header
 	private boolean validatePurchaseHeader(Row headerRow) {
 	    if (headerRow == null) return false;
 	    return getCellValue(headerRow, 0).equalsIgnoreCase("Model_no") &&
@@ -328,6 +348,7 @@ public class SellerService implements ISellerService {
 	           getCellValue(headerRow, 6).equalsIgnoreCase("Phono");
 	}
 
+	// Parse one row of Excel into PurchaseTable object
 	private PurchaseTable parsePurchaseRow(Row row, String rowIdentifier, Integer seller_id) throws Exception {
 	    PurchaseTable purchase = new PurchaseTable();
 
@@ -351,6 +372,7 @@ public class SellerService implements ISellerService {
 	    }
 	}
 
+	// Validate fields of Purchase
 	private void validatePurchase(PurchaseTable purchase, String rowIdentifier) throws Exception {
 	    if (purchase.getModelNo() == null || purchase.getModelNo().trim().isEmpty()) {
 	        throw new Exception("Model No is required");
@@ -373,6 +395,7 @@ public class SellerService implements ISellerService {
 	    }
 	}
 
+	// Parse a string into integer with validation
 	private int parseIntSafe(String value, String fieldName) throws Exception {
 	    try {
 	        return Integer.parseInt(value);
@@ -381,6 +404,7 @@ public class SellerService implements ISellerService {
 	    }
 	}
 
+	// Extract value from Excel cell
 	private String getCellValue(Row row, int cellIndex) {
 	    Cell cell = row.getCell(cellIndex);
 	    if (cell == null) return "";
@@ -404,9 +428,7 @@ public class SellerService implements ISellerService {
 	    }
 	}
 
-	
-	
-	
+	// Post single purchase record
 	@Override
     public PostResponse PostPurchase(PurchaseTable purchaseItem) {
         PostResponse response = new PostResponse();
@@ -428,17 +450,19 @@ public class SellerService implements ISellerService {
         return response;
     }
 	
+	// Get paginated purchase list with optional filters
 	@Override
 	public Page<PurchaseTable> GetPurchases(Integer sellerId, String modelNo, Pageable pageable) {
 	    return purchaseRepository.findFilteredPurchases(sellerId, modelNo, pageable);
 	}
 
+	// Get paginated inventory list with filters
 	@Override
 	public Page<InventoryItem> GetAllInventory(Integer sellerId, Integer categoryId, String modelNo, Integer warranty, LocalDate purchaseDate, Pageable pageable) {
 	    return sellerRepository.findByFilters(sellerId, categoryId, modelNo, warranty, purchaseDate, pageable);
 	}
 
-
+    // Update an existing inventory record
 	@Transactional
 	public PostResponse EditInventory(InventoryItem newItem, Integer purchaseId) {
 	    PostResponse resp = new PostResponse();
@@ -468,6 +492,7 @@ public class SellerService implements ISellerService {
 	    return resp;
 	}
 	
+	// Soft delete an inventory record
 	@Transactional
 	public PostResponse DeleteInventory(@RequestParam Integer purchase_id) {
 	    int rowsAffected = sellerRepository.DeleteInventory(purchase_id);
@@ -483,6 +508,8 @@ public class SellerService implements ISellerService {
 
 	    return response;
 	}
+	
+	// Update an existing purchase
 	@Transactional
 	public PostResponse EditPurchase(@RequestBody PurchaseTable purchaseItem, @RequestParam Integer sale_id) {
 	    PostResponse resp = new PostResponse();
@@ -516,6 +543,7 @@ public class SellerService implements ISellerService {
 	    return resp;
 	}
 	
+	// Soft delete a purchase record
 	@Transactional
 	public PostResponse DeletePurchase(@RequestParam Integer sale_id) {
 		int rows = purchaseRepository.DeletePurchase(sale_id);
@@ -531,6 +559,7 @@ public class SellerService implements ISellerService {
 		
 	}
 	
+	// Check if a model number + phone exists in purchases (used for warranty request)
 	 @Override
 	    public Boolean WarrrantyReqValid(@RequestParam String ModelNo,@RequestParam String PhoneNo) {
 		int exists = purchaseRepository.WarrrantyReqValid(ModelNo,PhoneNo);

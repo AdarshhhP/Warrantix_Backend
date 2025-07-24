@@ -17,6 +17,7 @@ public interface PurchaseRepository extends JpaRepository<PurchaseTable,Integer>
 //	@Query("Select u from PurchaseTable u where u.seller_id = :Seller_Id And u.is_deleted=0")
 //	public List<PurchaseTable> GetPurchases(@RequestParam Integer Seller_Id);
 	
+	// Get paginated list of purchases with optional filters for seller ID and model number
 	@Query("SELECT p FROM PurchaseTable p " +
 		       "WHERE p.is_deleted = 0 " +
 		       "AND (:sellerId IS NULL OR p.seller_id = :sellerId) " +
@@ -27,12 +28,12 @@ public interface PurchaseRepository extends JpaRepository<PurchaseTable,Integer>
 		    Pageable pageable
 		);
 
-
-	
+    // Mark a purchase as deleted by setting is_deleted = 1 
 	@Modifying
 	@Query("Update PurchaseTable a set a.is_deleted=1 where a.sale_id=:sale_id")
 	int DeletePurchase(@Param("sale_id") Integer sale_id);
 	
+	// Check if a warranty request is valid by verifying model number and phone number
 	@Query("SELECT COUNT(u) FROM PurchaseTable u WHERE u.modelNo = :ModelNo AND u.Phono = :PhoneNo")
 	int WarrrantyReqValid(@Param("ModelNo") String ModelNo, @Param("PhoneNo") String PhoneNo);
 }

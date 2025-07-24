@@ -37,6 +37,7 @@ public class CustomerServiceController {
 	@Autowired
 	private ICustomerService service;
 	
+	// Common method to handle validation errors and return meaningful messages
 	private ResponseEntity<?> handleValidationErrors(BindingResult bindingResult) {
         Map<String, String> errors = new HashMap<>();
         for (FieldError error : bindingResult.getFieldErrors()) {
@@ -45,6 +46,7 @@ public class CustomerServiceController {
         return ResponseEntity.badRequest().body(errors);
     }
 	
+	// Register a new customer warranty
 	@PostMapping("/register-warranty")
 	public ResponseEntity<?> registercustomer(@Valid @RequestBody CustomerRegPayload customerRegPayload,BindingResult bindingResult) {
 		if (bindingResult.hasErrors()) {
@@ -54,8 +56,7 @@ public class CustomerServiceController {
 		return ResponseEntity.ok(response);
 	}
 	
-	
-	
+	// Get warranty requests of a customer
 	@GetMapping("/warranty-requests-customer")
 	public List<CustomerDetails> getWarrantyRequests(
 	        @RequestParam Integer customerId,
@@ -67,7 +68,7 @@ public class CustomerServiceController {
 	    return service.getWarrantyRequests(customerId, modelNoSanitized);
 	}
 
-	
+	// Raise a new warranty request
 	@PostMapping("/raise-warranty-request")
 	public ResponseEntity<?> raiseWarrantyRequest(@Valid @RequestBody RaiseWarrantyPayload view, BindingResult bindingResult) {
 		if (bindingResult.hasErrors()) {
@@ -77,6 +78,7 @@ public class CustomerServiceController {
 		return ResponseEntity.ok(response);
 	}
 	
+	// Get all raised warranty requests for a customer
 	@GetMapping("/raised-warranty-requests-customer")
 	public List<CompanyView> getRaisedWarrantyRequestsForCustomer(
 	    @RequestParam Integer userId,
@@ -89,8 +91,7 @@ public class CustomerServiceController {
 	    return service.getRaisedWarrantyRequestsForCustomer(userId, status, modelNoSanitized);
 	}
 
-
-	
+    // Get all raised warranty requests for a company with filters
 	@GetMapping("/getraised-warranty-requests")
 	public Page<CompanyView> getWarrayRequestsByCustomers(
 	    @RequestParam Integer company_id, // required
@@ -122,9 +123,7 @@ public class CustomerServiceController {
 	    );
 	}
 
-
-	
-	
+	 // Edit an already registered warranty using purchase ID
 	 @PostMapping("/editregistered-warranty")
 	    public ResponseEntity<?> editCustomer(@RequestParam Integer purchase_Id,@Valid @RequestBody CustomerDetails updatedCustomer, BindingResult bindingResult) {
 		 if (bindingResult.hasErrors()) {
@@ -143,17 +142,20 @@ public class CustomerServiceController {
 		 }
 		 return ResponseEntity.ok(response);
 	}
-
+     
+	// Delete a registered warranty using purchase ID
 	 @PostMapping("/delete-registered-warranty")
 	    public PostResponse deleteCustomer(@RequestParam Integer purchase_Id) {
 	        return service.deleteCustomer(purchase_Id);
 	 }
 	 
+	 // Delete a raised warranty request using raised ID
 	 @PostMapping("/delete-raised-warranty-requests")
 	 public PostResponse deleteRaisedWarranty(@RequestParam Integer raised_Id) {
 		 return service.deleteRaisedWarranty(raised_Id);
 	 }
 	 
+	 // Take action on a warranty (approve/reject) with optional rejection remarks
 	 @GetMapping("/warranty-action")
 	 public PostResponse WarrantyAction(@RequestParam Integer purchase_id,@RequestParam Integer status , @RequestParam(required = false) String rejection_remarks) {
 		 return service.WarrantyAction(purchase_id,status,rejection_remarks);

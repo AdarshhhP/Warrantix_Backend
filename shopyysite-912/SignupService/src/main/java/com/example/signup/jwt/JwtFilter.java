@@ -22,28 +22,31 @@ public class JwtFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtil jwtUtil;
 
+    // This method is executed once per request to filter and validate JWT
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain)
             throws ServletException, IOException {
-
+        // Get the Authorization header
         String authHeader = request.getHeader("Authorization");
-
+        // Check if the header is not null and starts with "Bearer "
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);
+            // Validate the token
             if (jwtUtil.validateToken(token)) {
+            	// Extract email from token
                 String email = jwtUtil.extractEmail(token);
-
+                // Create authentication token with extracted email
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(email, null, Collections.emptyList());
-
+                // Attach request details to the authentication object
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
+                // Set authentication to Spring Security context
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
         }
-
+        // Continue with the filter chain
         filterChain.doFilter(request, response);
     }
 }

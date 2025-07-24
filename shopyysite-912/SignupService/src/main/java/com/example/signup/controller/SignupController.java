@@ -33,6 +33,7 @@ public class SignupController {
 	@Autowired
 	private  IUserService service;
 	
+	// Helper method to return validation errors in a readable format
 	private ResponseEntity<?> handleValidationErrors(BindingResult bindingResult) {
         Map<String, String> errors = new HashMap<>();
         for (FieldError error : bindingResult.getFieldErrors()) {
@@ -41,6 +42,7 @@ public class SignupController {
         return ResponseEntity.badRequest().body(errors);
     }
 
+	// Sign up endpoint using UserPayload
 	@PostMapping("/signup")
 	public ResponseEntity<?> signUp(@Valid @RequestBody UserPayload userPayload, BindingResult bindingResult) {
 		if (bindingResult.hasErrors()) {
@@ -52,7 +54,7 @@ public class SignupController {
 	    
 	}
 
-	
+	// Login endpoint using UserDTO
 	@PostMapping("/login")
 	public ResponseEntity<?> Login(@Valid @RequestBody UserDTO usedto, BindingResult bindingResult) {
 		if (bindingResult.hasErrors()) {
@@ -63,11 +65,13 @@ public class SignupController {
         return ResponseEntity.ok(response);
 	}
 	
+	// Get all registered users
 	@GetMapping("/getusers")
 	public List<UserDetails>GetUsers(){
 		return service.GetUsers();
 	}
 	
+	// User creation 
 	@PostMapping("/createuser")
 	public ResponseEntity<?> signUp1(@Valid @RequestBody UserDetails userDetails, BindingResult bindingResult) {
 		if (bindingResult.hasErrors()) {
@@ -79,6 +83,7 @@ public class SignupController {
 	    
 	}
 	
+	// Get a single user's details by user ID
 	@GetMapping("/getuserdetails")
 	public UserDetails GetUserDetails(@RequestParam Integer user_Id) {
 		return service.GetUserDetails(user_Id);
