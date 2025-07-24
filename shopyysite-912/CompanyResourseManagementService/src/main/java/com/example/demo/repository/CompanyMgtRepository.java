@@ -17,7 +17,8 @@ import com.example.demo.model.ProductDetails;
 
 @Repository
 public interface CompanyMgtRepository extends JpaRepository<ProductDetails, Integer> {
-   
+	
+   //Get paginated product list with optional filters
 	@Query("SELECT p FROM ProductDetails p\r\n"+ "WHERE p.Company_id = :companyId\r\n"
 	        + "AND (:holderStatus IS NULL OR p.HolderStatus = :holderStatus)\r\n"
 			+ "AND (:productCategory IS NULL OR p.Product_category = :productCategory)\r\n"
@@ -28,16 +29,20 @@ public interface CompanyMgtRepository extends JpaRepository<ProductDetails, Inte
 		        @Param("productCategory") String productCategory,@Param("modelNo") String modelNo, @Param("manDate") LocalDate manDate,Pageable pageable
 		    );
 	
+	//Get product details by model number.
 	@Query("Select u from ProductDetails u where u.Model_no=:Model_no")
 	ProductDetails getProductDetailsByModelNo(@RequestParam String Model_no);
 	
+	//Get multiple products based on a list of model numbers.
 	@Query("SELECT u FROM ProductDetails u WHERE u.Model_no IN :modelNos")
 	List<ProductDetails> getProductsByModelNos(@Param("modelNos") List<String> modelNos);
 	
+	//Update holder status of a product using model number.
 	@Modifying
 	@Query("Update ProductDetails p set p.HolderStatus=:status where p.Model_no=:Model_no")
 	Integer ChangeholderStatus(@RequestParam String Model_no,@RequestParam Integer status);
 	
+	//Check product eligibility based on model number and holder status.
 	@Query("SELECT u FROM ProductDetails u WHERE u.Model_no = :Model_no AND u.HolderStatus = :checkvalue-1")
 	List<ProductDetails> CheckEligibility(
 	    @Param("Model_no") String modelNo,

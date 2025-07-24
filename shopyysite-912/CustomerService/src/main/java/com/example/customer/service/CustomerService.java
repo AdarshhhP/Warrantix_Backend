@@ -28,6 +28,7 @@ public class CustomerService implements ICustomerService  {
 	@Autowired
 	private CompanyViewRepository companyviewrepository;
 	
+	// Register a customer for warranty
 	@Transactional
 	@Override
 	public PostResponse registercustomer(@RequestBody CustomerRegPayload customerRegPayload) {
@@ -61,7 +62,7 @@ public class CustomerService implements ICustomerService  {
 	    return response;
 	}
 
-
+    // Get filtered warranty requests for the company
 	@Override
 	public Page<CompanyView> getWarrayRequestsByCustomers(Integer company_id, Integer status, String modelNo, LocalDate purchaseDate, 
 			LocalDate warrantyPeriod, Integer customerId, LocalDate requestDateStart, LocalDate requestDateEnd , Pageable pageable ) {
@@ -69,13 +70,14 @@ public class CustomerService implements ICustomerService  {
 	    return companyviewrepository.findFilteredCompanyViews(company_id,status,modelNo,purchaseDate,warrantyPeriod,customerId,requestDateStart,requestDateEnd,pageable);
 	}
 
-	
+	// Get raised warranty requests for a specific customer with optional filters
 	@Override
 	public List<CompanyView> getRaisedWarrantyRequestsForCustomer(@RequestParam Integer userId,@RequestParam(required = false) Integer status,@RequestParam(required = false) String modelNo ){
 
 		return companyviewrepository.findRaisedWarrantyRequestsForCustomerFiltered(userId, status, modelNo);
 	}
 	
+	// Raise a warranty request
 	@Override
 	public PostResponse raiseWarrantyRequest(@RequestBody RaiseWarrantyPayload view) {
 		
@@ -111,11 +113,13 @@ public class CustomerService implements ICustomerService  {
 	return Pr;   
 	}
 
+	// Get registered warranty requests by customer with optional model filter
     @Override
     public List<CustomerDetails> getWarrantyRequests(@RequestParam Integer customerId, @RequestParam(required = false) String modelNo) {
     	return repository.findFilteredCustomerDetails(modelNo, customerId );
     }
     
+    // Edit/update an already registered customer warranty
     @Override
     public CustomerDetails updateCustomer(Integer purchase_Id, CustomerDetails updatedCustomer) {
         Optional<CustomerDetails> optional = repository.findById(purchase_Id);
@@ -130,6 +134,7 @@ public class CustomerService implements ICustomerService  {
         }
     }
 
+    // Soft delete a registered warranty
     @Transactional
     @Override
     public PostResponse deleteCustomer(Integer purchase_Id) {
@@ -156,6 +161,7 @@ public class CustomerService implements ICustomerService  {
     return k;
     }
     
+    // Soft delete a raised warranty request
     @Transactional
     public PostResponse deleteRaisedWarranty(@RequestParam Integer raised_Id) {
     	PostResponse k=new PostResponse();
@@ -171,6 +177,7 @@ public class CustomerService implements ICustomerService  {
         return k;
     }
     
+    // Approve or reject warranty
     @Transactional
     @Override
     public PostResponse WarrantyAction(@RequestParam Integer purchase_id , @RequestParam Integer status, @RequestParam(required = false) String rejection_remarks) {

@@ -18,10 +18,12 @@ import com.example.demo.response.PostResponse;
 @Repository
 public interface SellerRepository extends JpaRepository<InventoryItem, Integer>  {
 	
+	// Soft delete inventory by setting is_deleted = 1 using purchase_id
 	@Modifying
 	@Query("Update InventoryItem u set u.is_deleted=1 where u.purchase_id=:purchase_id")
 	int DeleteInventory(@Param("purchase_id") Integer purchase_id);
 	
+	// Get paginated inventory list based on multiple optional filters
 	@Query("SELECT i FROM InventoryItem i " +
 		       "WHERE i.seller_id = :sellerId AND i.is_deleted = 0 " +
 		       "AND (:categoryId IS NULL OR i.Category_id = :categoryId) " +
@@ -36,7 +38,5 @@ public interface SellerRepository extends JpaRepository<InventoryItem, Integer> 
 		    @Param("purchaseDate") LocalDate purchaseDate,
 		    Pageable pageable
 		);
-
-
 
 }

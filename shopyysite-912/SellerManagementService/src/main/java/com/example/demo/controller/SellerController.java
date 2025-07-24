@@ -42,7 +42,7 @@ public class SellerController {
 		this.isellerservice=isellerservice;
 	}
 	
-
+	// Add a new purchase entry
 	@PostMapping("/purchase")
 	public ResponseEntity<?> postPurchase(@Valid @RequestBody PurchaseTable purchaseItem, BindingResult bindingResult) {
  
@@ -57,17 +57,20 @@ public class SellerController {
 	    return ResponseEntity.ok(response);
 	}
 	
+	// Upload multiple purchases using Excel file
 	@PostMapping(value = "/bulkupload-purchase", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
 	public BulkUploadResponse bulkUploadPurchase(@RequestParam("file") MultipartFile postedFile,@RequestParam Integer seller_id) {
 	    return isellerservice.bulkUploadPurchase(postedFile,seller_id);
 	}
 	
+	// Upload multiple inventory items using Excel file
 	 @PostMapping(value = "/bulk-upload-inventory", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
      public BulkUploadResponse bulkUploadInventory(@RequestParam("file") MultipartFile file,
                                                       @RequestParam("seller_id") Integer sellerId) {
          return isellerservice.bulkUploadInventory(file, sellerId);
      }
 
+	 // Add a single inventory item
 	@PostMapping("/inventory")
 	public ResponseEntity<?> PostInventory(@Valid @RequestBody InventoryItem inventoryItem, BindingResult bindingResult) {
 	    if (bindingResult.hasErrors()) {
@@ -82,7 +85,7 @@ public class SellerController {
 	    return ResponseEntity.ok(response);
 	}
 
-	
+	// Get list of purchases
 	@GetMapping("/GetPurchases")
 	public Page<PurchaseTable> GetPurchases(
 	        @RequestParam(required = false) Integer Seller_Id,
@@ -95,7 +98,7 @@ public class SellerController {
 	    return isellerservice.GetPurchases(Seller_Id, modelNoSanitized, pageable);
 	}
 
-	
+	// Get list of inventory items
 	@GetMapping("/allinventory")
 	public Page<InventoryItem> GetAllInventory(
 	        @RequestParam Integer Seller_Id,
@@ -114,26 +117,31 @@ public class SellerController {
 	}
 
 
-	
+	// Edit an existing inventory item
 	@PostMapping("/editinventory")
 	public PostResponse editInventory(@RequestBody InventoryItem inventoryItem,@RequestParam Integer purchaseId) {
      return isellerservice.EditInventory(inventoryItem, purchaseId);
-          }
+    }
+	
+	// Delete an inventory item
 	@PostMapping("/deleteinventory")
 	public PostResponse DeleteInventory(@RequestParam Integer purchase_id) {
 		return isellerservice.DeleteInventory(purchase_id);
 	}
 	
+	// Edit an existing purchase
 	@PostMapping("/editpurchase")
 	public PostResponse EditPurchase(@RequestBody PurchaseTable purchaseItem,@RequestParam Integer sale_id) {
 		return isellerservice.EditPurchase(purchaseItem,sale_id);
 	}
 	
+	// Delete a purchase
 	@GetMapping("/deletepurchase")
 	public PostResponse DeletePurchase(@RequestParam Integer sale_id) {
 		return isellerservice.DeletePurchase(sale_id);
 	}
 	
+	// Check if warranty request is valid using model number and phone number
 	 @GetMapping("/warranty-reg-valid")
 	 public Boolean WarrrantyReqValid(@RequestParam String ModelNo,@RequestParam String PhoneNo) {
 		 return isellerservice.WarrrantyReqValid(ModelNo,PhoneNo);

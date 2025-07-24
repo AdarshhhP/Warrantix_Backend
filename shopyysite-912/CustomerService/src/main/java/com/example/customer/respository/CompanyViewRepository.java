@@ -15,18 +15,22 @@ import com.example.customer.model.CompanyView;
 import com.example.customer.model.CustomerDetails;
 
 public interface CompanyViewRepository extends JpaRepository<CompanyView, Integer> {
-
+    
+	// Get all raised warranty requests by customer ID
 	@Query("Select c from CompanyView c where c.customer_id=:userId")
 	 List<CompanyView> getRaisedWarrantyRequestsForCustomer(@RequestParam Integer userId);
 	
+	// Update warranty status and optional rejection remark for a specific warranty request
 	@Modifying
 	@Query("Update CompanyView c set c.warranty_status=:status , c.rejection_remark = :rejection_remarks where c.warranty_request_id=:purchase_id")
 	Integer WarrantyAction(@RequestParam Integer purchase_id,@RequestParam Integer status,@RequestParam(required=false) String rejection_remarks);
 	
+	// Mark a raised warranty request as deleted
 	@Modifying
 	@Query("UPDATE CompanyView c set c.isDeleted=1 where c.warranty_request_id=:raised_Id")
 	Integer deleteRaisedWarranty(@RequestParam Integer raised_Id);
 	
+	// Get paginated and filtered list of warranty requests for company dashboard
 	@Query("SELECT c FROM CompanyView c WHERE " +
 		       "(:status IS NULL OR c.warranty_status = :status) AND " +
 		       "(c.company_id = :company_id) AND " +
@@ -48,8 +52,7 @@ public interface CompanyViewRepository extends JpaRepository<CompanyView, Intege
 		        Pageable pageable
 		);
 
-	
-	
+	// Get raised warranty requests for a customer with optional status and model number filters
 	@Query("SELECT c FROM CompanyView c WHERE c.customer_id = :userId AND " +
 	           "(:status IS NULL OR c.warranty_status = :status) AND " +
 	           "(:modelNo IS NULL OR c.model_no LIKE %:modelNo%)")

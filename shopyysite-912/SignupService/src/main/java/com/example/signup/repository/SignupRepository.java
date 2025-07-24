@@ -13,11 +13,12 @@ import com.example.signup.model.UserDetails;
 
 @Repository
 public interface SignupRepository extends JpaRepository<UserDetails, Integer>{
+	// Find a user by their email address (used for login and validation)
 	Optional<UserDetails> findByEmail(String email);
-	
+	// Get all users from the UserDetails table
 	@Query("SELECT u FROM UserDetails u")
 	public List<UserDetails>GetUsers();
-	
+	// Get user details for a specific user_id
 	@Query("SELECT u FROM UserDetails u WHERE u.user_id = :user_Id")
 	UserDetails GetUserDetails(@Param("user_Id") Integer user_Id);
 }
