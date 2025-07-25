@@ -10,6 +10,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -32,8 +33,10 @@ private Integer Warranty;
 private String Name;
 @Email(message = "Email format is invalid")
 @NotBlank(message="Email required")
-@Email(message="Provid a proper email id")
+@Email(message="Provide a proper email id")
 private String Email;
+@Size(min = 10, max = 10, message = "Phone number must be exactly 10 digits")
+@NotBlank(message = "Phone number is required")
 private String Phono;
 private Integer seller_id;
 private Integer is_deleted=0;

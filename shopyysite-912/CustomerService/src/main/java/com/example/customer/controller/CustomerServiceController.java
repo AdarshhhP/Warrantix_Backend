@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -58,14 +59,16 @@ public class CustomerServiceController {
 	
 	// Get warranty requests of a customer
 	@GetMapping("/warranty-requests-customer")
-	public List<CustomerDetails> getWarrantyRequests(
+	public Page<CustomerDetails> getWarrantyRequests(
 	        @RequestParam Integer customerId,
-	        @RequestParam(required = false) String modelNo) {
+	        @RequestParam(required = false) String modelNo,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size) {
 
 	    // Sanitize modelNo input
 	    String modelNoSanitized = (modelNo == null || modelNo.trim().isEmpty()) ? null : modelNo.trim();
-
-	    return service.getWarrantyRequests(customerId, modelNoSanitized);
+	    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "purchase_Id"));
+	    return service.getWarrantyRequests(customerId, modelNoSanitized,pageable);
 	}
 
 	// Raise a new warranty request
@@ -107,8 +110,7 @@ public class CustomerServiceController {
 	) {
 	    // Sanitize String parameters
 	    String modelNoSanitized = (modelNo == null || modelNo.trim().isEmpty()) ? "" : modelNo.trim();
-	    Pageable pageable = PageRequest.of(page, size);
-
+	    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "warranty_request_id"));
 
 	    return service.getWarrayRequestsByCustomers(
 	        company_id,

@@ -73,6 +73,7 @@ public class UserService implements IUserService {
            // obj.setMessage("Logged In");
             obj.setUser_type(user.getUserType());
             obj.setUser_id(user.getUserId());
+            obj.setUser_name(user.getUserName());
             return obj;
         }else {
         	obj.setJwt("");
