@@ -8,11 +8,19 @@ public class LoginResponse {
     private String jwt;
     private Integer user_type;
     private Integer users_id;
+    private String user_name;
+    
+    public String getUser_name() {
+		return user_name;
+	}
+
+	public void setUser_name(String user_name) {
+		this.user_name = user_name;
+	}
 
     public Integer getUser_id() {
 		return users_id;
 	}
-
 
 	public void setUser_id(Integer user_id) {
 		this.users_id = user_id;
@@ -23,11 +31,9 @@ public class LoginResponse {
 		return user_type;
 	}
 
-
 	public void setUser_type(Integer user_type) {
 		this.user_type = user_type;
 	}
-
 
 	// Getters and Setters
     public int getStatusCode() {

@@ -120,7 +120,11 @@ public class SellerService implements ISellerService {
                      // Check if item already exists (by model number)
                      if(validateModelNoPurchases(item.getModel_no())!=true) {
                      validItems.add(item); // Add to valid list
-                     successRows.add(rowLabel + " added successfully");}
+                     successRows.add(rowLabel + " added successfully");
+                     String url = "http://localhost:1089/changeholderstatus?Model_no=" + item.getModel_no() + "&status=" + 2;
+	   	              restTemplate.postForObject(url, null, PostResponse.class);
+                    
+                    }
                      else {
                          failedRows.add(item.getModel_no()+" failed: " + "Item already exist");
                      }

@@ -115,8 +115,8 @@ public class CustomerService implements ICustomerService  {
 
 	// Get registered warranty requests by customer with optional model filter
     @Override
-    public List<CustomerDetails> getWarrantyRequests(@RequestParam Integer customerId, @RequestParam(required = false) String modelNo) {
-    	return repository.findFilteredCustomerDetails(modelNo, customerId );
+    public Page<CustomerDetails> getWarrantyRequests(@RequestParam Integer customerId, @RequestParam(required = false) String modelNo, Pageable pageable) {
+    	return repository.findFilteredCustomerDetails(modelNo, customerId, pageable );
     }
     
     // Edit/update an already registered customer warranty

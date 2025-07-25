@@ -1,10 +1,12 @@
 package com.example.demo.controller;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -44,16 +46,22 @@ public class SellerController {
 	
 	// Add a new purchase entry
 	@PostMapping("/purchase")
-	public ResponseEntity<?> postPurchase(@Valid @RequestBody PurchaseTable purchaseItem, BindingResult bindingResult) {
- 
+	public ResponseEntity<PostResponse> postPurchase(@Valid @RequestBody PurchaseTable purchaseItem, BindingResult bindingResult) {
+
+	    PostResponse response = new PostResponse();
+
 	    if (bindingResult.hasErrors()) {
-	        List<String> errors = bindingResult.getFieldErrors().stream()
+	        String errorMessages = bindingResult.getFieldErrors().stream()
 	            .map(err -> err.getField() + ": " + err.getDefaultMessage())
-	            .toList();
-	        return ResponseEntity.badRequest().body(errors);
+	            .collect(Collectors.joining("; ")); // Combine all messages into a single string
+
+	        response.setStatusCode(400);
+	        response.setMessage(errorMessages);
+
+	        return ResponseEntity.badRequest().body(response);
 	    }
- 
-	    PostResponse response = isellerservice.PostPurchase(purchaseItem);
+
+	    response = isellerservice.PostPurchase(purchaseItem);
 	    return ResponseEntity.ok(response);
 	}
 	
@@ -94,7 +102,7 @@ public class SellerController {
 	        @RequestParam(defaultValue = "5") int size) {
 
 	    String modelNoSanitized = (modelNo == null || modelNo.trim().isEmpty()) ? null : modelNo.trim();
-	    Pageable pageable = PageRequest.of(page, size);
+	    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "sale_id"));
 	    return isellerservice.GetPurchases(Seller_Id, modelNoSanitized, pageable);
 	}
 
@@ -112,7 +120,7 @@ public class SellerController {
 		Integer categoryIdInt = (categoryId == null || categoryId.trim().isEmpty()) ? null : Integer.valueOf(categoryId);
 	    String modelNoSanitized = (modelNo == null || modelNo.trim().isEmpty()) ? null : modelNo.trim();
 	    Integer warrantyInt = (warranty == null || warranty.trim().isEmpty()) ? null : Integer.valueOf(warranty);
-	    Pageable pageable = PageRequest.of(page, size);
+	    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "purchase_id"));
 	    return isellerservice.GetAllInventory(Seller_Id, categoryIdInt, modelNoSanitized, warrantyInt, purchaseDate, pageable);
 	}
 

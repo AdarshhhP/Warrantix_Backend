@@ -18,7 +18,7 @@ import com.example.demo.payload.RaiseWarrantyPayload;
 public interface ICustomerService {
 	public PostResponse registercustomer(@RequestBody CustomerRegPayload customerRegPayload);
 
-	public List<CustomerDetails> getWarrantyRequests(Integer customerId, String modelNo);   
+	public Page<CustomerDetails> getWarrantyRequests(Integer customerId, String modelNo, Pageable pageable);   
 	
 	public Page<CompanyView> getWarrayRequestsByCustomers(Integer company_id, Integer status, String modelNo, LocalDate purchaseDate, 
 			LocalDate warrantyPeriod, Integer customerId, LocalDate requestDateStart, LocalDate requestDateEnd , Pageable pageable );	
