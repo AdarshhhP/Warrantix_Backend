@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/CustomerCom
     username: postgres
-    password: Wow3password
+    password: postgres
 
   jpa:
     hibernate:
@@ -22,5 +22,5 @@ spring:
 
 server:
   port: 1089
-  tomcat:
-    max-http-post-size: 10485760  # 10MB in bytes
+#  tomcat:
+#    max-http-post-size: 10485760  # 10MB in bytes
