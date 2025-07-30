@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-
 import com.example.signup.dto.UserDTO;
+import com.example.signup.dto.UserInfoDTO;
 import com.example.signup.model.UserDetails;
 import com.example.signup.model.payload.UserPayload;
 import com.example.signup.model.response.LoginResponse;
@@ -87,5 +87,10 @@ public class SignupController {
 	@GetMapping("/getuserdetails")
 	public UserDetails GetUserDetails(@RequestParam Integer user_Id) {
 		return service.GetUserDetails(user_Id);
+	}
+	
+	@PostMapping("/getusername")
+	public List<UserInfoDTO> getUsernameByUserIds(@RequestBody List<Integer> user_Id) {
+	   return service.getUsernameByUserIds(user_Id);
 	}
 }
