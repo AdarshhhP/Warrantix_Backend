@@ -120,7 +120,7 @@ public class SellerService implements ISellerService {
                      // Check if item already exists (by model number)
                      if(validateModelNoPurchases(item.getModel_no())!=true) {
                      validItems.add(item); // Add to valid list
-                     successRows.add(rowLabel + " added successfully");
+                     successRows.add(item.getModel_no() + " added successfully");
                      String url = "http://localhost:1089/changeholderstatus?Model_no=" + item.getModel_no() + "&status=" + 2;
 	   	              restTemplate.postForObject(url, null, PostResponse.class);
                     
@@ -176,7 +176,10 @@ public class SellerService implements ISellerService {
 
     	    ResponseModelData response = restTemplate.getForObject(url, ResponseModelData.class, modelNo);
     	    
-    	    
+    	    if (response == null || response.getCompany_id() == null) {
+    	        throw new Exception("Product not found for model number: " + modelNo);
+    	        
+    	    }
          InventoryItem item = new InventoryItem();
          try {
              item.setModel_no(getCellValue(row, 0));

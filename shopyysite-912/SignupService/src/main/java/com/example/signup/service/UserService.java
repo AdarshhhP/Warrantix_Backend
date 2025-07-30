@@ -5,9 +5,11 @@ import java.util.List;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.signup.dto.UserDTO;
+import com.example.signup.dto.UserInfoDTO;
 import com.example.signup.jwt.JwtUtil;
 import com.example.signup.model.UserDetails;
 import com.example.signup.model.payload.UserPayload;
@@ -112,5 +114,11 @@ public class UserService implements IUserService {
 	@Override
 	public UserDetails GetUserDetails(Integer user_Id) {
 		return userRepository.GetUserDetails(user_Id);
+	}
+	
+	
+	@Override
+	public List<UserInfoDTO> getUsernameByUserIds(@RequestBody List<Integer> user_Id) {
+		return userRepository.getUsernameByUserIds(user_Id);
 	}
 }
