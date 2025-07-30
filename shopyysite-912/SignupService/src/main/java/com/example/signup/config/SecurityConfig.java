@@ -33,6 +33,7 @@ public class SecurityConfig {
                     "/signup",
                     "/createuser",
                     "/getuserdetails",
+                    "/getusername",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html"

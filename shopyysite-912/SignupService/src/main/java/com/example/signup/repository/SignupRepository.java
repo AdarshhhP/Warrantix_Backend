@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.example.signup.dto.UserInfoDTO;
 import com.example.signup.model.UserDetails;
 
 @Repository
@@ -21,4 +22,8 @@ public interface SignupRepository extends JpaRepository<UserDetails, Integer>{
 	// Get user details for a specific user_id
 	@Query("SELECT u FROM UserDetails u WHERE u.user_id = :user_Id")
 	UserDetails GetUserDetails(@Param("user_Id") Integer user_Id);
+	
+	@Query("SELECT new com.example.signup.dto.UserInfoDTO(u.userName, u.email) FROM UserDetails u WHERE u.user_id IN :user_Id")
+	List<UserInfoDTO> getUsernameByUserIds(@Param("user_Id") List<Integer> user_Id);
+
 }
