@@ -6,6 +6,8 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -18,7 +20,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.signup.dto.UserDTO;
 import com.example.signup.dto.UserInfoDTO;
+import com.example.signup.dto.UserInfoUserType;
+import com.example.signup.dto.UserListResponse;
 import com.example.signup.model.UserDetails;
+import com.example.signup.model.payload.EmailRequest;
 import com.example.signup.model.payload.UserPayload;
 import com.example.signup.model.response.LoginResponse;
 import com.example.signup.model.response.SignInResponse;
@@ -32,6 +37,9 @@ import jakarta.validation.Valid;
 public class SignupController {
 	@Autowired
 	private  IUserService service;
+	
+	 @Autowired
+	 private JavaMailSender mailSender;
 	
 	// Helper method to return validation errors in a readable format
 	private ResponseEntity<?> handleValidationErrors(BindingResult bindingResult) {
@@ -93,4 +101,25 @@ public class SignupController {
 	public List<UserInfoDTO> getUsernameByUserIds(@RequestBody List<Integer> user_Id) {
 	   return service.getUsernameByUserIds(user_Id);
 	}
+	
+	@GetMapping("/getallusers")
+	public UserListResponse getAllUsers( @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size){
+		return service.getAllUsers(page,size);
+	}
+	
+	@PostMapping("/send")
+    public ResponseEntity<String> sendEmail(@RequestBody EmailRequest request) {
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(request.getTo());
+            message.setSubject(request.getSubject());
+            message.setText(request.getBody());
+            mailSender.send(message);
+            return ResponseEntity.ok("Email sent successfully!");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error sending email.");
+        }
+    }
+	
 }
