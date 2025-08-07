@@ -3,6 +3,9 @@ package com.example.demo.controller;
 import com.example.demo.payload.BatchRequest;
 import com.example.demo.payload.BatchResponse;
 import com.example.demo.service.IBatchService;
+
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,4 +22,11 @@ public class BatchController {
         BatchResponse response = batchService.createBatch(request);
         return ResponseEntity.ok(response);
     }
+    
+    @GetMapping("/list")
+    public ResponseEntity<List<BatchResponse>> listBatches() {
+        List<BatchResponse> responses = batchService.getAllBatches();
+        return ResponseEntity.ok(responses);
+    }
+
 }
