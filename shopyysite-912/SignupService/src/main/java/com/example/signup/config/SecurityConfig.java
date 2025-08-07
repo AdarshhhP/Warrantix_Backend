@@ -31,12 +31,14 @@ public class SecurityConfig {
                 .requestMatchers(
                     "/login",
                     "/signup",
-                    "/createuser",
-                    "/getuserdetails",
-                    "/getusername",
+//                    "/createuser",
+//                    "/getuserdetails",
+//                    "/getusername",
+//                    "/getallusers",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
-                    "/swagger-ui.html"
+                    "/swagger-ui.html",
+                    "/send"
                 ).permitAll()
                 .anyRequest().authenticated()
             )

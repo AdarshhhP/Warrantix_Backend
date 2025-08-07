@@ -2,7 +2,10 @@ package com.example.signup.service;
 
 
 import java.util.List;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -10,12 +13,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.signup.dto.UserDTO;
 import com.example.signup.dto.UserInfoDTO;
+import com.example.signup.dto.UserInfoUserType;
+import com.example.signup.dto.UserListResponse;
 import com.example.signup.jwt.JwtUtil;
 import com.example.signup.model.UserDetails;
 import com.example.signup.model.payload.UserPayload;
 import com.example.signup.model.response.LoginResponse;
 import com.example.signup.model.response.SignInResponse;
 import com.example.signup.repository.SignupRepository;
+import org.springframework.data.domain.Pageable;
 
 import jakarta.transaction.Transactional;
 
@@ -121,4 +127,32 @@ public class UserService implements IUserService {
 	public List<UserInfoDTO> getUsernameByUserIds(@RequestBody List<Integer> user_Id) {
 		return userRepository.getUsernameByUserIds(user_Id);
 	}
+	
+	@Override
+	public UserListResponse getAllUsers(int page, int size) {
+	    Pageable pageable = PageRequest.of(page, size);
+	    Page<UserDetails> pagedResult = userRepository.findAll(pageable);
+
+	    
+	    List<UserDetails> nonDeletedUsers = pagedResult.getContent().stream()
+	            .filter(user -> user.getIs_deleted() == 0)
+	            .collect(Collectors.toList());
+	    
+	    List<UserInfoUserType> userDTOs = nonDeletedUsers.stream()
+	            .map(user -> new UserInfoUserType(user.getUserName(), user.getEmail(), user.getUserType()))
+	            .collect(Collectors.toList());
+
+	    UserListResponse url = new UserListResponse();
+	    url.setMessage("fetchdone");
+	    url.setStatusCode(200);
+	    url.setUserinfo(userDTOs);
+	    url.setTotalPages(pagedResult.getTotalPages());     // Optional
+	    url.setTotalElements(pagedResult.getTotalElements()); // Optional
+	    url.setCurrentPage(page); // Optional
+
+	    return url;
+	}
+
+
+
 }
