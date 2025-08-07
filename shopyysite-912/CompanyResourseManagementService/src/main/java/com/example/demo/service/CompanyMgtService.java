@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
  
 import com.example.demo.model.ProductDetails;
+import com.example.demo.model.ProductSerial;
 import com.example.demo.repository.CompanyMgtRepository;
 import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.PostResponse;
@@ -52,18 +53,44 @@ public class CompanyMgtService implements ICompanyMgtService {
 	    PostResponse response = new PostResponse();
 	    
 	    try {
-	        // The productDetails object now contains a list of base64 images
-	        ProductDetails savedProduct = companyMgtRepository.save(productDetails);
+	        String postedModelNo = productDetails.getModel_no();
+	        Integer lastProdId = getLastProdId(); // The highest ID currently in DB
+	        if (lastProdId == null) lastProdId = 0; // handle null case if table is empty
+
+	        List<ProductSerial> generatedSerials = new ArrayList<>();
 	        
+	        for (int i = 0; i < productDetails.getQuantity(); i++) {
+	            int nextProdId = lastProdId + 1 + i; // ensure uniqueness
+	            String serialNo = postedModelNo + nextProdId;
+	            
+	            ProductSerial pserial = new ProductSerial(); // Create NEW instance for each serial
+	            pserial.setModel_No(postedModelNo);
+	            pserial.setSerialNo(serialNo);
+	            pserial.setIs_sold(0); // Set default value
+	            pserial.setProduct(productDetails); // THIS IS CRUCIAL - sets the relationship
+	            
+	            generatedSerials.add(pserial);
+	        }
+
+	        productDetails.setProductSerials(generatedSerials);
+	        companyMgtRepository.save(productDetails);
 	        response.setStatusCode(200);
-	        response.setMessage("Product created successfully with " +
-	                          savedProduct.getProductImages().size() + " images");
+	        response.setMessage("Product created successfully with " + productDetails.getProductImages().size() + " images");
 	    } catch (Exception e) {
 	        response.setStatusCode(500);
 	        response.setMessage("Error creating product: " + e.getMessage());
 	    }
-	    
 	    return response;
+	}
+	
+	public Integer getLastProdId() {
+    	List<ProductDetails> productDetails = companyMgtRepository.findAll();
+    	 return productDetails.stream()
+    	            .map(ProductDetails::getProd_id)
+    	            .filter(Objects::nonNull)
+    	            .max(Integer::compareTo)
+    	            .orElse(null);
+    	  
 	}
 	
 	// Bulk upload products from Excel file
