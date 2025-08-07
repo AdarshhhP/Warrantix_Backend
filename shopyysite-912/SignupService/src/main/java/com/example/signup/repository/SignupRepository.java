@@ -23,7 +23,7 @@ public interface SignupRepository extends JpaRepository<UserDetails, Integer>{
 	@Query("SELECT u FROM UserDetails u WHERE u.user_id = :user_Id")
 	UserDetails GetUserDetails(@Param("user_Id") Integer user_Id);
 	
-	@Query("SELECT new com.example.signup.dto.UserInfoDTO(u.userName, u.email) FROM UserDetails u WHERE u.user_id IN :user_Id")
+	@Query("SELECT new com.example.signup.dto.UserInfoDTO(u.user_id, u.userName, u.email) FROM UserDetails u WHERE u.user_id IN :user_Id")
 	List<UserInfoDTO> getUsernameByUserIds(@Param("user_Id") List<Integer> user_Id);
 
 }
