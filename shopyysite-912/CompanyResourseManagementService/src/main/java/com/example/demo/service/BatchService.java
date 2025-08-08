@@ -25,8 +25,11 @@ public class BatchService implements IBatchService {
     public BatchResponse createBatch(BatchRequest request) {
         String modelNo = request.getModelNo();
      // ✅ Check if model number exists
+        BatchResponse br=new BatchResponse();
         if (!productRepository.existsByModelNo(modelNo)) {
-            throw new IllegalArgumentException("Model number " + modelNo + " does not exist.");
+            br.setStatusCode(404);
+            br.setMessage("Model No Doesnt Exist");
+            return br;
         }
         String prefix = modelNo.substring(0, Math.min(3, modelNo.length())).toUpperCase();
         long count = batchRepository.countBymodelNoStartingWith(modelNo) + 1;

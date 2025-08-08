@@ -28,4 +28,9 @@ public interface ICompanyMgtService {
             schema = @Schema(type = "string", format = "binary"))
   @RequestParam("file") MultipartFile postedFile,@RequestParam Integer company_id);
 	public ProductDetails getProductDetailsByProductId(@RequestParam Integer productId);
+	
+	public PostResponse ChangeMultipleSerialStatus(@RequestParam Integer prod_id,
+            @RequestParam Integer sold_status,
+            @RequestParam List<String> serialNos);
+	
 }

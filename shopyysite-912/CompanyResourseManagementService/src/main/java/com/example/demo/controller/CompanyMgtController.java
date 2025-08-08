@@ -108,4 +108,10 @@ public class CompanyMgtController {
 	public ProductDetails getProductDetailsByProductId(@RequestParam Integer productId) {
 		return service.getProductDetailsByProductId(productId);
 	}
+	@GetMapping("/changeserialStatus")
+	public PostResponse ChangeMultipleSerialStatus(@RequestParam Integer prod_id,
+            @RequestParam Integer sold_status,
+            @RequestParam List<String> serialNos) {
+		return service.ChangeMultipleSerialStatus(prod_id,sold_status,serialNos);
+	}
 }

@@ -3,9 +3,27 @@ package com.example.demo.payload;
 import java.util.List;
 
 public class BatchResponse {
+	private Integer StatusCode;
+	private String Message;
     private String modelNo;
     private String batchNo;
     private List<String> serialNo;
+    
+	public Integer getStatusCode() {
+		return StatusCode;
+	}
+
+	public void setStatusCode(Integer statusCode) {
+		StatusCode = statusCode;
+	}
+
+	public String getMessage() {
+		return Message;
+	}
+
+	public void setMessage(String message) {
+		Message = message;
+	}
 
     public String getModelNo() {
         return modelNo;
