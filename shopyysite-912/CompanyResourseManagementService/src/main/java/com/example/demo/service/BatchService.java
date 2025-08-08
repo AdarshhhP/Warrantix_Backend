@@ -10,6 +10,7 @@ import com.example.demo.repository.CompanyMgtRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
@@ -57,4 +58,21 @@ public class BatchService implements IBatchService {
 
         return response;
     }
+    
+    @Override
+    public List<BatchResponse> getAllBatches() {
+        List<Batch> batches = batchRepository.findAll();
+
+        return batches.stream().map(batch -> {
+            BatchResponse response = new BatchResponse();
+            response.setModelNo(batch.getModel_no());
+            response.setBatchNo(batch.getBatch_no());
+            response.setSerialNo(batch.getSerialMappings()
+                .stream()
+                .map(BatchProductMap::getSerialNo)
+                .collect(Collectors.toList()));
+            return response;
+        }).collect(Collectors.toList());
+    }
+
 }

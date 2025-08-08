@@ -2,6 +2,8 @@ package com.example.demo.controller;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+
 import java.time.LocalDate;
 import java.util.List;
  
@@ -13,6 +15,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -101,6 +104,10 @@ public class CompanyMgtController {
 		return service.CheckEligibility(Model_no,checkvalue);
 	}
 	
+	@GetMapping("/getProductDetailsByProductId")
+	public ProductDetails getProductDetailsByProductId(@RequestParam Integer productId) {
+		return service.getProductDetailsByProductId(productId);
+	}
 	@GetMapping("/changeserialStatus")
 	public PostResponse ChangeMultipleSerialStatus(@RequestParam Integer prod_id,
             @RequestParam Integer sold_status,
