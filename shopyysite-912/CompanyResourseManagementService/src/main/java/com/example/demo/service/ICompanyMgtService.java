@@ -27,4 +27,5 @@ public interface ICompanyMgtService {
 	public BulkUploadResponse bulkUploadProducts(@Parameter(description = "File containing product data", 
             schema = @Schema(type = "string", format = "binary"))
   @RequestParam("file") MultipartFile postedFile,@RequestParam Integer company_id);
+	public ProductDetails getProductDetailsByProductId(@RequestParam Integer productId);
 }

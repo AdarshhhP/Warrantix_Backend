@@ -413,6 +413,10 @@ public PostResponse ChangeholderStatus(@RequestParam String Model_no,@RequestPar
 	}
 	return pr;
 }
- 
- 
+//Get product details by product_id
+@Override
+public ProductDetails getProductDetailsByProductId(@RequestParam Integer productId) {
+	return companyMgtRepository.getProductDetailsByProductId(productId);
+}
+
 }

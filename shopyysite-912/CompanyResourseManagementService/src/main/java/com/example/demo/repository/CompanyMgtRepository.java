@@ -50,4 +50,7 @@ public interface CompanyMgtRepository extends JpaRepository<ProductDetails, Inte
 
 	@Query("SELECT COUNT(p) > 0 FROM ProductDetails p WHERE p.Model_no = :modelNo")
 	boolean existsByModelNo(@Param("modelNo") String modelNo);
+	
+    @Query("SELECT u FROM ProductDetails u WHERE u.prod_id IN :ProductId")
+    ProductDetails getProductDetailsByProductId(@RequestParam Integer ProductId);
 }
