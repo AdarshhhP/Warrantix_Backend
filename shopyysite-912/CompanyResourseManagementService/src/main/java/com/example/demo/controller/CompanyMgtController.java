@@ -100,4 +100,11 @@ public class CompanyMgtController {
 	public Boolean CheckEligibility(@RequestParam String Model_no,@RequestParam Integer checkvalue) {
 		return service.CheckEligibility(Model_no,checkvalue);
 	}
+	
+	@GetMapping("/changeserialStatus")
+	public PostResponse ChangeMultipleSerialStatus(@RequestParam Integer prod_id,
+            @RequestParam Integer sold_status,
+            @RequestParam List<String> serialNos) {
+		return service.ChangeMultipleSerialStatus(prod_id,sold_status,serialNos);
+	}
 }

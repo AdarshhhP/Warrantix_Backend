@@ -33,6 +33,10 @@ public interface CompanyMgtRepository extends JpaRepository<ProductDetails, Inte
 	@Query("Select u from ProductDetails u where u.Model_no=:Model_no")
 	ProductDetails getProductDetailsByModelNo(@RequestParam String Model_no);
 	
+	@Query("Select u from ProductDetails u where u.prod_id=:prod_id")
+	ProductDetails getProductDetailsByProductId(@RequestParam Integer prod_id);
+
+	
 	//Get multiple products based on a list of model numbers.
 	@Query("SELECT u FROM ProductDetails u WHERE u.Model_no IN :modelNos")
 	List<ProductDetails> getProductsByModelNos(@Param("modelNos") List<String> modelNos);
