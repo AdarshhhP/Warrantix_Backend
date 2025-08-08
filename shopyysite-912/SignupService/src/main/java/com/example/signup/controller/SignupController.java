@@ -38,8 +38,8 @@ public class SignupController {
 	@Autowired
 	private  IUserService service;
 	
-	 @Autowired
-	 private JavaMailSender mailSender;
+//	 @Autowired
+//	 private JavaMailSender mailSender;
 	
 	// Helper method to return validation errors in a readable format
 	private ResponseEntity<?> handleValidationErrors(BindingResult bindingResult) {
@@ -108,18 +108,18 @@ public class SignupController {
 		return service.getAllUsers(page,size);
 	}
 	
-	@PostMapping("/send")
-    public ResponseEntity<String> sendEmail(@RequestBody EmailRequest request) {
-        try {
-            SimpleMailMessage message = new SimpleMailMessage();
-            message.setTo(request.getTo());
-            message.setSubject(request.getSubject());
-            message.setText(request.getBody());
-            mailSender.send(message);
-            return ResponseEntity.ok("Email sent successfully!");
-        } catch (Exception e) {
-            return ResponseEntity.status(500).body("Error sending email.");
-        }
-    }
+//	@PostMapping("/send")
+//    public ResponseEntity<String> sendEmail(@RequestBody EmailRequest request) {
+//        try {
+//            SimpleMailMessage message = new SimpleMailMessage();
+//            message.setTo(request.getTo());
+//            message.setSubject(request.getSubject());
+//            message.setText(request.getBody());
+//            mailSender.send(message);
+//            return ResponseEntity.ok("Email sent successfully!");
+//        } catch (Exception e) {
+//            return ResponseEntity.status(500).body("Error sending email.");
+//        }
+//    }
 	
 }

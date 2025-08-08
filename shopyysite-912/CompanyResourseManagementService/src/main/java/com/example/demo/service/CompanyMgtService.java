@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Base64;
  
  
@@ -82,6 +83,70 @@ public class CompanyMgtService implements ICompanyMgtService {
 	    }
 	    return response;
 	}
+	
+	public PostResponse ChangeMultipleSerialStatus(@RequestParam Integer prod_id,
+            @RequestParam Integer sold_status,
+            @RequestParam List<String> serialNos) {
+PostResponse pr = new PostResponse();
+try {
+// Find the product
+ProductDetails pd = companyMgtRepository.getProductDetailsByProductId(prod_id);
+if (pd == null) {
+pr.setStatusCode(404);
+pr.setMessage("Product not found");
+return pr;
+}
+
+// Get all serials for this product
+List<ProductSerial> pds = pd.getProductSerials();
+if (pds == null || pds.isEmpty()) {
+pr.setStatusCode(404);
+pr.setMessage("No serials found for this product");
+return pr;
+}
+
+// Track which serials were found and updated
+List<String> updatedSerials = new ArrayList<>();
+List<String> notFoundSerials = new ArrayList<>();
+
+// Find and update each serial number in the list
+for (String serialNo : serialNos) {
+Optional<ProductSerial> matchingSerial = pds.stream()
+.filter(ps -> serialNo.equals(ps.getSerialNo()))
+.findFirst();
+
+if (matchingSerial.isPresent()) {
+ProductSerial ps = matchingSerial.get();
+ps.setIs_sold(sold_status);
+updatedSerials.add(serialNo);
+} else {
+notFoundSerials.add(serialNo);
+}
+}
+
+// Save all changes at once
+companyMgtRepository.save(pd);
+
+// Prepare response message
+if (updatedSerials.isEmpty() && !notFoundSerials.isEmpty()) {
+pr.setStatusCode(404);
+pr.setMessage("None of the provided serial numbers were found for this product");
+} else if (!notFoundSerials.isEmpty()) {
+pr.setStatusCode(207); // Multi-status
+pr.setMessage("Successfully updated serials: " + updatedSerials + 
+". Not found: " + notFoundSerials);
+} else {
+pr.setStatusCode(200);
+pr.setMessage("All serials (" + updatedSerials.size() + ") updated successfully");
+}
+
+return pr;
+} catch (Exception e) {
+pr.setStatusCode(500);
+pr.setMessage("Error updating serial statuses: " + e.getMessage());
+return pr;
+}
+}
 	
 	public Integer getLastProdId() {
     	List<ProductDetails> productDetails = companyMgtRepository.findAll();
