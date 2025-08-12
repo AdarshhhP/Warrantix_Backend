@@ -5,10 +5,12 @@ import java.util.List;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.model.ProductDetails;
+import com.example.demo.payload.UpdateSerialStatusRequest;
 import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.PostResponse;
 
@@ -27,10 +29,9 @@ public interface ICompanyMgtService {
 	public BulkUploadResponse bulkUploadProducts(@Parameter(description = "File containing product data", 
             schema = @Schema(type = "string", format = "binary"))
   @RequestParam("file") MultipartFile postedFile,@RequestParam Integer company_id);
+	
 	public ProductDetails getProductDetailsByProductId(@RequestParam Integer productId);
 	
-	public PostResponse ChangeMultipleSerialStatus(@RequestParam Integer prod_id,
-            @RequestParam Integer sold_status,
-            @RequestParam List<String> serialNos);
+	public PostResponse ChangeMultipleSerialStatus(@RequestBody UpdateSerialStatusRequest requestBody);
 	
 }

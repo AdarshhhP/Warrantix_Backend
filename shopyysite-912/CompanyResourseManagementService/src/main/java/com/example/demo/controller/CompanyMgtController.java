@@ -25,6 +25,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.service.annotation.PostExchange;
  
 import com.example.demo.model.ProductDetails;
+import com.example.demo.payload.UpdateSerialStatusRequest;
 import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.PostResponse;
 import com.example.demo.service.ICompanyMgtService;
@@ -108,10 +109,8 @@ public class CompanyMgtController {
 	public ProductDetails getProductDetailsByProductId(@RequestParam Integer productId) {
 		return service.getProductDetailsByProductId(productId);
 	}
-	@GetMapping("/changeserialStatus")
-	public PostResponse ChangeMultipleSerialStatus(@RequestParam Integer prod_id,
-            @RequestParam Integer sold_status,
-            @RequestParam List<String> serialNos) {
-		return service.ChangeMultipleSerialStatus(prod_id,sold_status,serialNos);
+	@PostMapping("/changeserialStatus")
+	public PostResponse ChangeMultipleSerialStatus(@RequestBody UpdateSerialStatusRequest requestbody) {
+		return service.ChangeMultipleSerialStatus(requestbody);
 	}
 }
