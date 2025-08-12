@@ -9,6 +9,7 @@ import com.example.demo.repository.CompanyMgtRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -73,6 +74,11 @@ public class BatchService implements IBatchService {
                 .collect(Collectors.toList()));
             return response;
         }).collect(Collectors.toList());
+    }
+    
+    @Override
+    public Batch getSerialByBatchNo(@RequestParam String BatchNo) {
+    	return batchRepository.getSerialByBatchNumber(BatchNo);
     }
 
 }

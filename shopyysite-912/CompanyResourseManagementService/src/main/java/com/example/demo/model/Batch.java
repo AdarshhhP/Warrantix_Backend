@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name = "batch_table")
 public class Batch {
@@ -16,6 +18,7 @@ public class Batch {
     private String batch_no;
 
     @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
     private List<BatchProductMap> serialMappings = new ArrayList<>();
 
     // Getters and Setters

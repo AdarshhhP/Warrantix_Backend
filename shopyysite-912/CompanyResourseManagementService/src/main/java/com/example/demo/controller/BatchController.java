@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.model.Batch;
 import com.example.demo.payload.BatchRequest;
 import com.example.demo.payload.BatchResponse;
 import com.example.demo.service.IBatchService;
@@ -28,6 +29,11 @@ public class BatchController {
     public ResponseEntity<List<BatchResponse>> listBatches() {
         List<BatchResponse> responses = batchService.getAllBatches();
         return ResponseEntity.ok(responses);
+    }
+    
+    @GetMapping("/getSerialByModelNo")
+    public Batch getSerialByBatchNo(@RequestParam String BatchNo) {
+    	return batchService.getSerialByBatchNo(BatchNo);
     }
 
 }

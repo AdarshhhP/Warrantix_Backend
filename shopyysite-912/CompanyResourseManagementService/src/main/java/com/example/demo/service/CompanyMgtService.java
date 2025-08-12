@@ -26,11 +26,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
  
 import com.example.demo.model.ProductDetails;
 import com.example.demo.model.ProductSerial;
+import com.example.demo.payload.UpdateSerialStatusRequest;
 import com.example.demo.repository.CompanyMgtRepository;
 import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.PostResponse;
@@ -84,13 +86,11 @@ public class CompanyMgtService implements ICompanyMgtService {
 	    return response;
 	}
 	
-	public PostResponse ChangeMultipleSerialStatus(@RequestParam Integer prod_id,
-            @RequestParam Integer sold_status,
-            @RequestParam List<String> serialNos) {
+	public PostResponse ChangeMultipleSerialStatus(@RequestBody UpdateSerialStatusRequest reqeustBody) {
 PostResponse pr = new PostResponse();
 try {
 // Find the product
-ProductDetails pd = companyMgtRepository.getProductDetailsByProductId(prod_id);
+ProductDetails pd = companyMgtRepository.getProductDetailsByProductId(reqeustBody.getProd_id());
 if (pd == null) {
 pr.setStatusCode(404);
 pr.setMessage("Product not found");
@@ -110,14 +110,14 @@ List<String> updatedSerials = new ArrayList<>();
 List<String> notFoundSerials = new ArrayList<>();
 
 // Find and update each serial number in the list
-for (String serialNo : serialNos) {
+for (String serialNo : reqeustBody.getSerialNos()) {
 Optional<ProductSerial> matchingSerial = pds.stream()
 .filter(ps -> serialNo.equals(ps.getSerialNo()))
 .findFirst();
 
 if (matchingSerial.isPresent()) {
 ProductSerial ps = matchingSerial.get();
-ps.setIs_sold(sold_status);
+ps.setIs_sold(reqeustBody.getSold_status());
 updatedSerials.add(serialNo);
 } else {
 notFoundSerials.add(serialNo);
