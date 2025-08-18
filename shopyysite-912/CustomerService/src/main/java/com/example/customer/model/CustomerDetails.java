@@ -24,11 +24,36 @@ public class CustomerDetails {
 
 	    @NotNull(message = "Purchase date is required")
 	    private LocalDate purchase_date;
+	    
+	    @NotNull(message = "Serial No cannot be empty")
+	    private String serial_no;
+	    
+	    private Integer companyId;
 
-	    @NotNull
+	    public Integer getCompanyId() {
+			return companyId;
+		}
+		public void setCompanyId(Integer companyId) {
+			this.companyId = companyId;
+		}
+		public String getSerial_no() {
+			return serial_no;
+		}
+		public void setSerial_no(String serial_no) {
+			this.serial_no = serial_no;
+		}
+		@NotNull
 	    private Integer isDeleted = 0;
+		
+		private Integer companyapprovalstatus=0;
 	    
 	   
+	public Integer getCompanyapprovalstatus() {
+			return companyapprovalstatus;
+		}
+		public void setCompanyapprovalstatus(Integer companyapprovalstatus) {
+			this.companyapprovalstatus = companyapprovalstatus;
+		}
 	public Integer getIsDeleted() {
 		return isDeleted;
 	}

@@ -27,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.model.InventoryItem;
 import com.example.demo.model.PurchaseTable;
 import com.example.demo.response.BulkUploadResponse;
+import com.example.demo.response.InventoryPost;
 import com.example.demo.response.PostResponse;
 import com.example.demo.service.ISellerService;
 
@@ -80,7 +81,7 @@ public class SellerController {
 
 	 // Add a single inventory item
 	@PostMapping("/inventory")
-	public ResponseEntity<?> PostInventory(@Valid @RequestBody InventoryItem inventoryItem, BindingResult bindingResult) {
+	public ResponseEntity<?> PostInventory(@Valid @RequestBody InventoryPost inventoryItem, BindingResult bindingResult) {
 	    if (bindingResult.hasErrors()) {
 	        Map<String, String> errors = new HashMap<>();
 	        bindingResult.getFieldErrors().forEach(error ->

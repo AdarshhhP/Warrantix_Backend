@@ -23,6 +23,7 @@ import com.example.demo.model.PurchaseTable;
 import com.example.demo.repository.PurchaseRepository;
 import com.example.demo.repository.SellerRepository;
 import com.example.demo.response.BulkUploadResponse;
+import com.example.demo.response.InventoryPost;
 import com.example.demo.response.PostResponse;
 import com.example.demo.response.ResponseModelData;
 
@@ -50,17 +51,64 @@ public class SellerService implements ISellerService {
 	
 	// Add single inventory item
 	@Transactional
-	public PostResponse PostInventory(InventoryItem inventoryItem) {
-		InventoryItem item = sellerRepository.save(inventoryItem);
-		PostResponse resp=new PostResponse();
-		if(item!=null && item.getCompany_id()!=null) {
-			resp.setStatusCode(200);
-			resp.setMessage("Successfully Posted");
-		}else {
-			resp.setStatusCode(400);
-			resp.setMessage("Couldnt save");
-		}
-		return resp;
+	public PostResponse PostInventory(InventoryPost inventoryItem) {
+	    // Check if serial_no list is not empty
+	    if (inventoryItem.getSerial_no() == null || inventoryItem.getSerial_no().isEmpty()) {
+	        PostResponse resp = new PostResponse();
+	        resp.setStatusCode(400);
+	        resp.setMessage("At least one serial number is required");
+	        return resp;
+	    }
+
+	    try {
+	        int successCount = 0;
+	        
+	        // Create one InventoryItem for each serial number
+	        for (String serialNo : inventoryItem.getSerial_no()) {
+	            InventoryItem Initem = new InventoryItem();
+	            Initem.setModel_no(inventoryItem.getModel_no());
+	            Initem.setCompany_id(inventoryItem.getCompany_id());
+	            Initem.setCategory_id(inventoryItem.getCategory_id());
+	            Initem.setPurchase_date(inventoryItem.getPurchase_date());
+	            Initem.setPrice(inventoryItem.getPrice());
+	            Initem.setWarranty(inventoryItem.getWarranty());
+	            Initem.setSeller_id(inventoryItem.getSeller_id());
+	            Initem.setSerial_no(serialNo); // Convert String to Integer
+	            Initem.setIs_deleted(0); 
+	            Initem.setIs_sold(1);
+	            
+
+	            InventoryItem item = sellerRepository.save(Initem);
+	            if (item != null && item.getCompany_id() != null) {
+	                successCount++;
+	            }
+	        }
+
+	        PostResponse resp = new PostResponse();
+	        if (successCount == inventoryItem.getSerial_no().size()) {
+	            resp.setStatusCode(200);
+	            resp.setMessage("All items successfully posted");
+	        } else if (successCount > 0) {
+	            resp.setStatusCode(207); // Multi-status
+	            resp.setMessage("Partially successful. Posted " + successCount + 
+	                          " out of " + inventoryItem.getSerial_no().size() + " items");
+	        } else {
+	            resp.setStatusCode(400);
+	            resp.setMessage("Couldn't save any items");
+	        }
+	        return resp;
+	        
+	    } catch (NumberFormatException e) {
+	        PostResponse resp = new PostResponse();
+	        resp.setStatusCode(400);
+	        resp.setMessage("Invalid serial number format. Must be numeric");
+	        return resp;
+	    } catch (Exception e) {
+	        PostResponse resp = new PostResponse();
+	        resp.setStatusCode(500);
+	        resp.setMessage("Error occurred: " + e.getMessage());
+	        return resp;
+	    }
 	}
 	
 	// Upload inventory in bulk from Excel

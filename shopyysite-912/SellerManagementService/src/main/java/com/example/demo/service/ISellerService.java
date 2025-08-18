@@ -12,10 +12,11 @@ import org.springframework.web.multipart.MultipartFile;
 import com.example.demo.model.InventoryItem;
 import com.example.demo.model.PurchaseTable;
 import com.example.demo.response.BulkUploadResponse;
+import com.example.demo.response.InventoryPost;
 import com.example.demo.response.PostResponse;
 
 public interface ISellerService {
-	public PostResponse PostInventory(InventoryItem inventoryItem);
+	public PostResponse PostInventory(InventoryPost inventoryItem);
 	public PostResponse PostPurchase(PurchaseTable purchaseItem);
 	Page<InventoryItem> GetAllInventory(Integer sellerId, Integer categoryId, String modelNo, Integer warranty, LocalDate purchaseDate, Pageable pageable);
 	Page<PurchaseTable> GetPurchases(Integer sellerId, String modelNo, Pageable pageable);

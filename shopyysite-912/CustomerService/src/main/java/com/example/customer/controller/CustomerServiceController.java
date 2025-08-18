@@ -28,6 +28,7 @@ import com.example.customer.service.ICustomerService;
 import com.example.demo.payload.CustomerRegPayload;
 import com.example.demo.payload.PostResponse;
 import com.example.demo.payload.RaiseWarrantyPayload;
+import com.example.customer.model.ChangeApprovalStatus;
 
 import jakarta.validation.Valid;
 
@@ -57,6 +58,11 @@ public class CustomerServiceController {
 		return ResponseEntity.ok(response);
 	}
 	
+	@PostMapping("/change_approval_status")
+	public PostResponse ChangeApprovalStatus(@RequestBody ChangeApprovalStatus changestatus) {
+		return service.ChangeApprovalStatus(changestatus);
+	}
+	
 	// Get warranty requests of a customer
 	@GetMapping("/warranty-requests-customer")
 	public Page<CustomerDetails> getWarrantyRequests(
@@ -69,6 +75,19 @@ public class CustomerServiceController {
 	    String modelNoSanitized = (modelNo == null || modelNo.trim().isEmpty()) ? null : modelNo.trim();
 	    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "purchase_Id"));
 	    return service.getWarrantyRequests(customerId, modelNoSanitized,pageable);
+	}
+	
+	@GetMapping("/warranty-requests-company")
+	public Page<CustomerDetails> getWarrantyRequestsCompany(
+	        @RequestParam Integer customerId,
+	        @RequestParam(required = false) String modelNo,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size) {
+
+	    // Sanitize modelNo input
+	    String modelNoSanitized = (modelNo == null || modelNo.trim().isEmpty()) ? null : modelNo.trim();
+	    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "purchase_Id"));
+	    return service.getWarrantyRequestsCompany(customerId, modelNoSanitized,pageable);
 	}
 
 	// Raise a new warranty request

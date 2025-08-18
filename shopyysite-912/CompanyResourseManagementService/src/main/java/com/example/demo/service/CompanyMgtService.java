@@ -32,8 +32,10 @@ import org.springframework.web.multipart.MultipartFile;
  
 import com.example.demo.model.ProductDetails;
 import com.example.demo.model.ProductSerial;
+import com.example.demo.payload.ChangeItemStatus;
 import com.example.demo.payload.UpdateSerialStatusRequest;
 import com.example.demo.repository.CompanyMgtRepository;
+import com.example.demo.repository.ProductSerialRepository;
 import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.PostResponse;
  
@@ -46,8 +48,12 @@ public class CompanyMgtService implements ICompanyMgtService {
 	
 	@Autowired
 	private CompanyMgtRepository companyMgtRepository;
-	public CompanyMgtService(CompanyMgtRepository companyMgtRepository) {
+	
+	@Autowired
+	private ProductSerialRepository prodrepository;
+	public CompanyMgtService(CompanyMgtRepository companyMgtRepository,ProductSerialRepository prodrepository) {
 		this.companyMgtRepository=companyMgtRepository;
+		this.prodrepository=prodrepository;
 	}
 	
 	// Save a single product with its details and images
@@ -483,5 +489,35 @@ public PostResponse ChangeholderStatus(@RequestParam String Model_no,@RequestPar
 public ProductDetails getProductDetailsByProductId(@RequestParam Integer productId) {
 	return companyMgtRepository.getProductDetailsByProductId(productId);
 }
+
+@Override
+public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemstatus) {
+    PostResponse pr = new PostResponse();
+
+    // Get matching serials from DB
+    List<ProductSerial> serialsToUpdate = prodrepository.findByModelNoAndSerialNos(
+            changeitemstatus.getModelNo(),
+            changeitemstatus.getSerialNos()
+    );
+
+    if (serialsToUpdate.isEmpty()) {
+        pr.setMessage("No matching serial numbers found for model " + changeitemstatus.getModelNo());
+        pr.setStatusCode(404);
+        return pr;
+    }
+
+    // Update the status for each matching serial
+    for (ProductSerial ps : serialsToUpdate) {
+        ps.setItemsStatus(changeitemstatus.getItemStatus());
+    }
+
+    // Save updated records in bulk
+    prodrepository.saveAll(serialsToUpdate);
+
+    pr.setMessage("Item status updated successfully for " + serialsToUpdate.size() + " serials");
+    pr.setStatusCode(200);
+    return pr;
+}
+
 
 }

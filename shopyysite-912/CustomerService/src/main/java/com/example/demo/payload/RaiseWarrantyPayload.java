@@ -29,6 +29,8 @@ public class RaiseWarrantyPayload {
 	private Integer company_id;
 	@NotBlank(message = "Reason required")
     private String reason;
+	@NotNull(message = "Serial No is required")
+	private String serial_no;
 
     public String getReason() {
     	return reason;
@@ -38,6 +40,12 @@ public class RaiseWarrantyPayload {
     }
 	public Integer getCustomer_id() {
 		return customer_id;
+	}
+	public String getSerial_no() {
+		return serial_no;
+	}
+	public void setSerial_no(String serial_no) {
+		this.serial_no = serial_no;
 	}
 	public void setCustomer_id(Integer customer_id) {
 		this.customer_id = customer_id;
