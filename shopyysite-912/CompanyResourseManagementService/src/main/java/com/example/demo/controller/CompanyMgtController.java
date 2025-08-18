@@ -26,6 +26,7 @@ import org.springframework.web.service.annotation.PostExchange;
 
 import com.example.demo.payload.ChangeItemStatus;
 import com.example.demo.model.ProductDetails;
+import com.example.demo.model.ProductSerial;
 import com.example.demo.payload.UpdateSerialStatusRequest;
 import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.PostResponse;
@@ -120,4 +121,13 @@ public class CompanyMgtController {
 		return service.ChangeItemStatus(changeitemstatus);
 	}
 	
+	@GetMapping("/not-sold")
+    public Page<ProductSerial> getNotSoldSerials(
+    		@RequestParam Integer is_sold,
+    		@RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        @RequestParam Integer productId) {
+		Pageable pageable = PageRequest.of(page, size);
+		return service.getNotSoldSerials(is_sold,productId,pageable);
+    }
 }

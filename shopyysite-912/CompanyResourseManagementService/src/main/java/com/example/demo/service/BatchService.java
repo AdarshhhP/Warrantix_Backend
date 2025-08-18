@@ -2,10 +2,12 @@ package com.example.demo.service;
 
 import com.example.demo.model.Batch;
 import com.example.demo.model.BatchProductMap;
+import com.example.demo.payload.AddSerialRequest;
 import com.example.demo.payload.BatchRequest;
 import com.example.demo.payload.BatchResponse;
 import com.example.demo.repository.BatchRepository;
 import com.example.demo.repository.CompanyMgtRepository;
+import com.example.demo.response.CreateBatchResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -35,20 +37,20 @@ public class BatchService implements IBatchService {
         String prefix = modelNo.substring(0, Math.min(3, modelNo.length())).toUpperCase();
         long count = batchRepository.countBymodelNoStartingWith(modelNo) + 1;
         String batchNo = prefix + "-" + String.format("%03d", count);
-
+ 
         Batch batch = new Batch();
         batch.setModel_no(modelNo);
         batch.setBatch_no(batchNo);
-
+ 
         request.getSerialNumbers().forEach(serial -> {
             BatchProductMap map = new BatchProductMap();
             map.setSerialNo(serial);
             map.setBatch(batch);
             batch.getSerialMappings().add(map);
         });
-
+ 
         Batch saved = batchRepository.save(batch);
-
+ 
         BatchResponse response = new BatchResponse();
         response.setModelNo(saved.getModel_no());
         response.setBatchNo(saved.getBatch_no());
@@ -56,9 +58,10 @@ public class BatchService implements IBatchService {
                 .stream()
                 .map(BatchProductMap::getSerialNo)
                 .collect(Collectors.toList()));
-
+ 
         return response;
     }
+
     
     @Override
     public List<BatchResponse> getAllBatches() {
@@ -80,5 +83,33 @@ public class BatchService implements IBatchService {
     public Batch getSerialByBatchNo(@RequestParam String BatchNo) {
     	return batchRepository.getSerialByBatchNumber(BatchNo);
     }
+    
+    @Override
+    public CreateBatchResponse addSerialsToBatch(AddSerialRequest request) {
+        CreateBatchResponse response = new CreateBatchResponse();
+
+        // Find the batch by batch number
+        Batch batch = batchRepository.getSerialByBatchNumber(request.getBatchNo());
+        if (batch == null) {
+            response.setStatusCode(404);
+            response.setMessage("Batch not found");
+            return response;
+        }
+
+        // Add new serial numbers
+        for (String serial : request.getSerialNumbers()) {
+            BatchProductMap map = new BatchProductMap();
+            map.setSerialNo(serial);
+            map.setBatch(batch);
+            batch.getSerialMappings().add(map);
+        }
+
+        batchRepository.save(batch);
+
+        response.setStatusCode(200);
+        response.setMessage("Serial numbers added successfully");
+        return response;
+    }
+
 
 }

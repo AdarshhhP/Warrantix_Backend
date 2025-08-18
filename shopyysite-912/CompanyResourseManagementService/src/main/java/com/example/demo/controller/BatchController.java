@@ -1,8 +1,10 @@
 package com.example.demo.controller;
 
 import com.example.demo.model.Batch;
+import com.example.demo.payload.AddSerialRequest;
 import com.example.demo.payload.BatchRequest;
 import com.example.demo.payload.BatchResponse;
+import com.example.demo.response.CreateBatchResponse;
 import com.example.demo.service.IBatchService;
 
 import java.util.List;
@@ -34,6 +36,11 @@ public class BatchController {
     @GetMapping("/getSerialByModelNo")
     public Batch getSerialByBatchNo(@RequestParam String BatchNo) {
     	return batchService.getSerialByBatchNo(BatchNo);
+    }
+
+    @PostMapping("/add-serials")
+    public ResponseEntity<CreateBatchResponse> addSerials(@RequestBody AddSerialRequest request) {
+        return ResponseEntity.ok(batchService.addSerialsToBatch(request));
     }
 
 }

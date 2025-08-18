@@ -51,7 +51,9 @@ public class CompanyMgtService implements ICompanyMgtService {
 	
 	@Autowired
 	private ProductSerialRepository prodrepository;
-	public CompanyMgtService(CompanyMgtRepository companyMgtRepository,ProductSerialRepository prodrepository) {
+    private ProductSerialRepository productSerialRepository;
+	
+	public CompanyMgtService(CompanyMgtRepository companyMgtRepository) {
 		this.companyMgtRepository=companyMgtRepository;
 		this.prodrepository=prodrepository;
 	}
@@ -520,4 +522,7 @@ public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemsta
 }
 
 
+public Page<ProductSerial> getNotSoldSerials(Integer is_sold,Integer productId, Pageable pageable) {
+	return productSerialRepository.getNotSoldSerials(is_sold, productId, pageable);
+}
 }
