@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.model.ProductDetails;
+import com.example.demo.model.ProductSerial;
 import com.example.demo.payload.UpdateSerialStatusRequest;
 import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.PostResponse;
@@ -33,5 +34,5 @@ public interface ICompanyMgtService {
 	public ProductDetails getProductDetailsByProductId(@RequestParam Integer productId);
 	
 	public PostResponse ChangeMultipleSerialStatus(@RequestBody UpdateSerialStatusRequest requestBody);
-	
+	public Page<ProductSerial> getNotSoldSerials(Integer is_sold,Integer productId, Pageable pageable);
 }

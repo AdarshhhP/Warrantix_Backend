@@ -14,6 +14,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.demo.model.ProductDetails;
+import com.example.demo.model.ProductSerial;
 
 @Repository
 public interface CompanyMgtRepository extends JpaRepository<ProductDetails, Integer> {
@@ -55,3 +56,5 @@ public interface CompanyMgtRepository extends JpaRepository<ProductDetails, Inte
     @Query("SELECT u FROM ProductDetails u WHERE u.prod_id IN :ProductId")
     ProductDetails getProductDetailsByProductId(@RequestParam Integer ProductId);
 }
+
+

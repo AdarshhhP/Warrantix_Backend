@@ -2,23 +2,19 @@ package com.example.demo.payload;
 
 import java.util.List;
 
-public class BatchRequest {
-	private String modelNo;
+public class AddSerialRequest {
+    private String batchNo;
     private List<String> serialNumbers;
 
-
-    public String getModelNo() {
-		return modelNo;
-	}
-
-	public void setModelNo(String modelNo) {
-		this.modelNo = modelNo;
-	}
-
-	public List<String> getSerialNumbers() {
+    public String getBatchNo() {
+        return batchNo;
+    }
+    public void setBatchNo(String batchNo) {
+        this.batchNo = batchNo;
+    }
+    public List<String> getSerialNumbers() {
         return serialNumbers;
     }
-
     public void setSerialNumbers(List<String> serialNumbers) {
         this.serialNumbers = serialNumbers;
     }
