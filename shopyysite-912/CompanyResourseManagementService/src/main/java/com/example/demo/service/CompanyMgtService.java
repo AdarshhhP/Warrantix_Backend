@@ -34,6 +34,7 @@ import com.example.demo.model.ProductDetails;
 import com.example.demo.model.ProductSerial;
 import com.example.demo.payload.UpdateSerialStatusRequest;
 import com.example.demo.repository.CompanyMgtRepository;
+import com.example.demo.repository.ProductSerialRepository;
 import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.PostResponse;
  
@@ -46,6 +47,10 @@ public class CompanyMgtService implements ICompanyMgtService {
 	
 	@Autowired
 	private CompanyMgtRepository companyMgtRepository;
+	
+	@Autowired
+    private ProductSerialRepository productSerialRepository;
+	
 	public CompanyMgtService(CompanyMgtRepository companyMgtRepository) {
 		this.companyMgtRepository=companyMgtRepository;
 	}
@@ -484,4 +489,8 @@ public ProductDetails getProductDetailsByProductId(@RequestParam Integer product
 	return companyMgtRepository.getProductDetailsByProductId(productId);
 }
 
+@Override
+public Page<ProductSerial> getNotSoldSerials(Integer is_sold,Integer productId, Pageable pageable) {
+	return productSerialRepository.getNotSoldSerials(is_sold, productId, pageable);
+}
 }
