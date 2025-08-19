@@ -50,13 +50,13 @@ public class CompanyMgtService implements ICompanyMgtService {
 	private CompanyMgtRepository companyMgtRepository;
 	
 	@Autowired
-	private ProductSerialRepository prodrepository;
     private ProductSerialRepository productSerialRepository;
 	
-	public CompanyMgtService(CompanyMgtRepository companyMgtRepository) {
-		this.companyMgtRepository=companyMgtRepository;
-		this.prodrepository=prodrepository;
-	}
+	public CompanyMgtService(CompanyMgtRepository companyMgtRepository, 
+            ProductSerialRepository productSerialRepository) {
+this.companyMgtRepository = companyMgtRepository;
+this.productSerialRepository = productSerialRepository;
+}
 	
 	// Save a single product with its details and images
 	@Override
@@ -497,7 +497,7 @@ public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemsta
     PostResponse pr = new PostResponse();
 
     // Get matching serials from DB
-    List<ProductSerial> serialsToUpdate = prodrepository.findByModelNoAndSerialNos(
+    List<ProductSerial> serialsToUpdate = productSerialRepository.findByModelNoAndSerialNos(
             changeitemstatus.getModelNo(),
             changeitemstatus.getSerialNos()
     );
@@ -514,7 +514,7 @@ public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemsta
     }
 
     // Save updated records in bulk
-    prodrepository.saveAll(serialsToUpdate);
+    productSerialRepository.saveAll(serialsToUpdate);
 
     pr.setMessage("Item status updated successfully for " + serialsToUpdate.size() + " serials");
     pr.setStatusCode(200);
