@@ -9,8 +9,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import com.example.customer.model.ChangeApprovalStatus;
 import com.example.customer.model.CompanyView;
 import com.example.customer.model.CustomerDetails;
+
+import jakarta.transaction.Transactional;
 
 public interface CustomerRepository extends JpaRepository<CustomerDetails, Integer> {
 
@@ -40,5 +46,19 @@ public interface CustomerRepository extends JpaRepository<CustomerDetails, Integ
     	    @Param("customerId") Integer customerId,
     	    Pageable pageable
     	);
-
+    
+    
+    @Query("SELECT c FROM CustomerDetails c WHERE c.isDeleted = 0 AND " +
+ 	       "(:modelNo IS NULL OR c.model_no = :modelNo) AND " +
+ 	       "(:customerId IS NULL OR c.companyId = :customerId)")
+ 	Page<CustomerDetails> findFilteredCompanyDetails(
+ 	    @Param("modelNo") String modelNo,
+ 	    @Param("customerId") Integer customerId,
+ 	    Pageable pageable
+ 	);
+    
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("UPDATE CustomerDetails u SET u.companyapprovalstatus = :approvalstatus WHERE u.purchase_Id = :purchase_id")
+    Integer changeApprovalStatuss(@Param("purchase_id") Integer purchaseId, @Param("approvalstatus") Integer approvalStatus);
 }

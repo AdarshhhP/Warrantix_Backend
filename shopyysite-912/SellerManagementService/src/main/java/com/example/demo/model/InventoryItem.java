@@ -1,6 +1,7 @@
 package com.example.demo.model;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -33,6 +34,22 @@ public class InventoryItem {
 	@NotNull(message = "Seller ID is required")
 	private Integer seller_id;
 	private Integer is_deleted = 0;
+    private String serial_no;
+    
+    private Integer is_sold=0;
+	
+	public Integer getIs_sold() {
+		return is_sold;
+	}
+	public void setIs_sold(Integer is_sold) {
+		this.is_sold = is_sold;
+	}
+	public String getSerial_no() {
+		return serial_no;
+	}
+	public void setSerial_no(String serial_no) {
+		this.serial_no = serial_no;
+	}
 	public Integer getSeller_id() {
 		return seller_id;
 	}

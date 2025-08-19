@@ -23,7 +23,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.service.annotation.PostExchange;
- 
+
+import com.example.demo.payload.ChangeItemStatus;
 import com.example.demo.model.ProductDetails;
 import com.example.demo.model.ProductSerial;
 import com.example.demo.payload.UpdateSerialStatusRequest;
@@ -114,6 +115,12 @@ public class CompanyMgtController {
 	public PostResponse ChangeMultipleSerialStatus(@RequestBody UpdateSerialStatusRequest requestbody) {
 		return service.ChangeMultipleSerialStatus(requestbody);
 	}
+	
+	@PostMapping("/changeitemstatus")
+	public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemstatus) {
+		return service.ChangeItemStatus(changeitemstatus);
+	}
+	
 	@GetMapping("/not-sold")
     public Page<ProductSerial> getNotSoldSerials(
     		@RequestParam Integer is_sold,

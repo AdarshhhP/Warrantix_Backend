@@ -25,8 +25,17 @@ public class ProductSerial {
 
     private String Model_No;
     // Getters and setters
+    private Integer ItemsStatus = 1;
 
-    public String getModel_No() {
+    public Integer getItemsStatus() {
+		return ItemsStatus;
+	}
+
+	public void setItemsStatus(Integer itemsStatus) {
+		ItemsStatus = itemsStatus;
+	}
+
+	public String getModel_No() {
 		return Model_No;
 	}
 

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.example.customer.model.ChangeApprovalStatus;
 import com.example.customer.model.CompanyView;
 import com.example.customer.model.CustomerDetails;
 import com.example.customer.respository.CompanyViewRepository;
@@ -48,6 +49,8 @@ public class CustomerService implements ICustomerService  {
 	    cd.setModel_no(customerRegPayload.getModel_no());
 	    cd.setPurchase_date(customerRegPayload.getPurchase_date());
 	    cd.setCustomerId(customerRegPayload.getCustomerId());
+	    cd.setSerial_no(customerRegPayload.getSerial_no());
+	    cd.setCompanyId(customerRegPayload.getCompany_id());
 
 	    CustomerDetails saved = repository.save(cd);
 
@@ -69,6 +72,8 @@ public class CustomerService implements ICustomerService  {
 	   
 	    return companyviewrepository.findFilteredCompanyViews(company_id,status,modelNo,purchaseDate,warrantyPeriod,customerId,requestDateStart,requestDateEnd,pageable);
 	}
+	
+	
 
 	// Get raised warranty requests for a specific customer with optional filters
 	@Override
@@ -101,6 +106,7 @@ public class CustomerService implements ICustomerService  {
 		cv.setRequest_date(view.getRequest_date());
 		cv.setCompany_id(view.getCompany_id());
 		cv.setReason(view.getReason());
+		cv.setSerial_no(view.getSerial_no());
 		
 		CompanyView f=companyviewrepository.save(cv);
 		if(f.getCustomer_id()!=null) {
@@ -117,6 +123,11 @@ public class CustomerService implements ICustomerService  {
     @Override
     public Page<CustomerDetails> getWarrantyRequests(@RequestParam Integer customerId, @RequestParam(required = false) String modelNo, Pageable pageable) {
     	return repository.findFilteredCustomerDetails(modelNo, customerId, pageable );
+    }
+    
+    @Override
+    public Page<CustomerDetails> getWarrantyRequestsCompany(@RequestParam Integer customerId, @RequestParam(required = false) String modelNo, Pageable pageable) {
+    	return repository.findFilteredCompanyDetails(modelNo, customerId, pageable );
     }
     
     // Edit/update an already registered customer warranty
@@ -193,5 +204,30 @@ public class CustomerService implements ICustomerService  {
     	}
     	return response;
     }
+    
+    @Transactional
+    @Override
+    public PostResponse ChangeApprovalStatus(@RequestBody ChangeApprovalStatus changestatus) {
+        PostResponse pr = new PostResponse();
+        try {
+            Integer result = repository.changeApprovalStatuss(
+                    changestatus.getPurchase_id(),
+                    changestatus.getApproval_status()
+            );
+
+            if (result != null && result > 0) {
+                pr.setMessage("done");
+                pr.setStatusCode(200);
+            } else {
+                pr.setMessage("Can't update status");
+                pr.setStatusCode(404);
+            }
+        } catch (Exception err) {
+            pr.setMessage("Error: " + err.getMessage());
+            pr.setStatusCode(500);
+        }
+        return pr;
+    }
+
    
 }

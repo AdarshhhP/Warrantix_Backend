@@ -40,6 +40,13 @@ private String Email;
 private String Phono;
 private Integer seller_id;
 private Integer is_deleted=0;
+private String SerialNo;
+public String getSerialNo() {
+	return SerialNo;
+}
+public void setSerialNo(String serialNo) {
+	SerialNo = serialNo;
+}
 public Integer getIs_deleted() {
 	return is_deleted;
 }
