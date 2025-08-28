@@ -76,7 +76,7 @@ public class SellerService implements ISellerService {
 	            Initem.setSerial_no(serialNo); // Convert String to Integer
 	            Initem.setIs_deleted(0); 
 	            Initem.setIs_sold(1);
-	            
+	            Initem.setAddedbatch_no(inventoryItem.getAddedbatch_no());
 
 	            InventoryItem item = sellerRepository.save(Initem);
 	            if (item != null && item.getCompany_id() != null) {

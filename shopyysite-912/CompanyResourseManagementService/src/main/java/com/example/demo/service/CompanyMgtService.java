@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
+import java.security.SecureRandom;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -50,49 +51,66 @@ public class CompanyMgtService implements ICompanyMgtService {
 	private CompanyMgtRepository companyMgtRepository;
 	
 	@Autowired
-	private ProductSerialRepository prodrepository;
     private ProductSerialRepository productSerialRepository;
 	
-	public CompanyMgtService(CompanyMgtRepository companyMgtRepository) {
-		this.companyMgtRepository=companyMgtRepository;
-		this.prodrepository=prodrepository;
-	}
-	
+	public CompanyMgtService(CompanyMgtRepository companyMgtRepository,
+            ProductSerialRepository productSerialRepository) {
+this.companyMgtRepository = companyMgtRepository;
+this.productSerialRepository = productSerialRepository;
+}
 	// Save a single product with its details and images
 	@Override
 	public PostResponse postProduct(ProductDetails productDetails) {
 	    PostResponse response = new PostResponse();
-	    
+
 	    try {
 	        String postedModelNo = productDetails.getModel_no();
-	        Integer lastProdId = getLastProdId(); // The highest ID currently in DB
-	        if (lastProdId == null) lastProdId = 0; // handle null case if table is empty
-
 	        List<ProductSerial> generatedSerials = new ArrayList<>();
-	        
+
 	        for (int i = 0; i < productDetails.getQuantity(); i++) {
-	            int nextProdId = lastProdId + 1 + i; // ensure uniqueness
-	            String serialNo = postedModelNo + nextProdId;
-	            
-	            ProductSerial pserial = new ProductSerial(); // Create NEW instance for each serial
+	            String serialNo;
+	            do {
+	                String randomPart = SerialGenerator.generateRandomCode(8); // e.g. 8 chars
+	                serialNo = postedModelNo + "#" + randomPart;
+	            } while (productSerialRepository.existsBySerialNo(serialNo)); // ensure uniqueness
+
+	            ProductSerial pserial = new ProductSerial();
 	            pserial.setModel_No(postedModelNo);
 	            pserial.setSerialNo(serialNo);
-	            pserial.setIs_sold(0); // Set default value
-	            pserial.setProduct(productDetails); // THIS IS CRUCIAL - sets the relationship
-	            
+	            pserial.setIs_sold(0);
+	            pserial.setProduct(productDetails);
+
 	            generatedSerials.add(pserial);
 	        }
 
 	        productDetails.setProductSerials(generatedSerials);
 	        companyMgtRepository.save(productDetails);
+
 	        response.setStatusCode(200);
-	        response.setMessage("Product created successfully with " + productDetails.getProductImages().size() + " images");
+	        response.setMessage("Product created successfully with " 
+	            + generatedSerials.size() + " serials and " 
+	            + productDetails.getProductImages().size() + " images");
 	    } catch (Exception e) {
 	        response.setStatusCode(500);
 	        response.setMessage("Error creating product: " + e.getMessage());
 	    }
 	    return response;
 	}
+	
+	private static class SerialGenerator {
+        private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        private static final SecureRandom random = new SecureRandom();
+
+        static String generateRandomCode(int length) {
+            StringBuilder sb = new StringBuilder(length);
+            for (int i = 0; i < length; i++) {
+                sb.append(CHARACTERS.charAt(random.nextInt(CHARACTERS.length())));
+            }
+            return sb.toString();
+        }
+    }
+	
+	
 	
 	public PostResponse ChangeMultipleSerialStatus(@RequestBody UpdateSerialStatusRequest reqeustBody) {
 PostResponse pr = new PostResponse();
@@ -497,7 +515,7 @@ public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemsta
     PostResponse pr = new PostResponse();
 
     // Get matching serials from DB
-    List<ProductSerial> serialsToUpdate = prodrepository.findByModelNoAndSerialNos(
+    List<ProductSerial> serialsToUpdate = productSerialRepository.findByModelNoAndSerialNos(
             changeitemstatus.getModelNo(),
             changeitemstatus.getSerialNos()
     );
@@ -514,7 +532,7 @@ public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemsta
     }
 
     // Save updated records in bulk
-    prodrepository.saveAll(serialsToUpdate);
+    productSerialRepository.saveAll(serialsToUpdate);
 
     pr.setMessage("Item status updated successfully for " + serialsToUpdate.size() + " serials");
     pr.setStatusCode(200);

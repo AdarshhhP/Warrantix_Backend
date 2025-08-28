@@ -41,6 +41,13 @@ private String Phono;
 private Integer seller_id;
 private Integer is_deleted=0;
 private String SerialNo;
+private String batchNo;
+public String getBatchNo() {
+	return batchNo;
+}
+public void setBatchNo(String batchNo) {
+	this.batchNo = batchNo;
+}
 public String getSerialNo() {
 	return SerialNo;
 }

@@ -36,7 +36,15 @@ public class InventoryItem {
 	private Integer is_deleted = 0;
     private String serial_no;
     
-    private Integer is_sold=0;
+    private String addedbatch_no;
+    
+    public String getAddedbatch_no() {
+		return addedbatch_no;
+	}
+	public void setAddedbatch_no(String addedbatch_no) {
+		this.addedbatch_no = addedbatch_no;
+	}
+	private Integer is_sold=0;
 	
 	public Integer getIs_sold() {
 		return is_sold;

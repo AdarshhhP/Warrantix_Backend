@@ -51,7 +51,17 @@ public class CompanyView {
     private String reason;
     @NotNull(message = "Serial No is required")
 	private String serial_no;
-    public String getSerial_no() {
+    
+    @NotNull(message="Raised On Date")
+	private String raisedon_date;
+    
+    public String getRaisedon_date() {
+		return raisedon_date;
+	}
+	public void setRaisedon_date(String raisedon_date) {
+		this.raisedon_date = raisedon_date;
+	}
+	public String getSerial_no() {
 		return serial_no;
 	}
 	public void setSerial_no(String serial_no) {
