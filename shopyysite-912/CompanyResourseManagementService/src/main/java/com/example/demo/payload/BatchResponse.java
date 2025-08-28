@@ -1,13 +1,32 @@
 package com.example.demo.payload;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class BatchResponse {
 	private Integer StatusCode;
 	private String Message;
-    private String modelNo;
+	private Integer batch_id;
+    public Integer getBatch_id() {
+		return batch_id;
+	}
+
+	public void setBatch_id(Integer batch_id) {
+		this.batch_id = batch_id;
+	}
+
+	private String modelNo;
     private String batchNo;
-    private List<String> serialNo;
+    private LocalDateTime createdDate;
+    public LocalDateTime getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(LocalDateTime createdDate) {
+		this.createdDate = createdDate;
+	}
+
+	private List<String> serialNo;
     
 	public Integer getStatusCode() {
 		return StatusCode;

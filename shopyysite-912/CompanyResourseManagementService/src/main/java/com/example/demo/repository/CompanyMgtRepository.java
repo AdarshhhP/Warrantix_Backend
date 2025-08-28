@@ -49,10 +49,12 @@ public interface CompanyMgtRepository extends JpaRepository<ProductDetails, Inte
 	List<ProductDetails> CheckEligibility(
 	    @Param("Model_no") String modelNo,
 	    @Param("checkvalue") int checkvalue);
-
+	
+    //  Checks whether a ProductDetails record exists for a given model number.
 	@Query("SELECT COUNT(p) > 0 FROM ProductDetails p WHERE p.Model_no = :modelNo")
 	boolean existsByModelNo(@Param("modelNo") String modelNo);
 	
+	// Retrieves a ProductDetails entity by its product ID.
     @Query("SELECT u FROM ProductDetails u WHERE u.prod_id IN :ProductId")
     ProductDetails getProductDetailsByProductId(@RequestParam Integer ProductId);
 }

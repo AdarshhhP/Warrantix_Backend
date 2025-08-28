@@ -8,8 +8,10 @@ import com.example.demo.model.Batch;
 import com.example.demo.payload.BatchResponse;
  
 public interface BatchRepository extends JpaRepository<Batch, Integer>{
+	// Counts the number of Batch records where the model number starts with the given prefix.
 	long countBymodelNoStartingWith(String modelNo);
 	
+	// Retrieves a Batch entity based on the given batch number.
 	@Query("Select u from Batch u where u.batch_no=:BatchNo")
 	Batch getSerialByBatchNumber(@RequestParam String BatchNo);
 }

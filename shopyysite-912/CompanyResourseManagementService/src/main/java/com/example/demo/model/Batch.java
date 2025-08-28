@@ -1,6 +1,8 @@
 package com.example.demo.model;
 
 import jakarta.persistence.*;
+
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,8 +18,8 @@ public class Batch {
 
     private String modelNo;
     private String batch_no;
-
-    @OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)
+    private LocalDateTime createdDate;
+	@OneToMany(mappedBy = "batch", cascade = CascadeType.ALL, orphanRemoval = true)
     @JsonManagedReference
     private List<BatchProductMap> serialMappings = new ArrayList<>();
 
@@ -53,4 +55,11 @@ public class Batch {
     public void setSerialMappings(List<BatchProductMap> serialMappings) {
         this.serialMappings = serialMappings;
     }
+    public LocalDateTime getCreatedDate() {
+		return createdDate;
+	}
+
+	public void setCreatedDate(LocalDateTime createdDate) {
+		this.createdDate = createdDate;
+	}
 }
