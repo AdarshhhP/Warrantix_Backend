@@ -22,5 +22,6 @@ public interface ProductSerialRepository extends JpaRepository<ProductSerial, Lo
 			@Param("is_sold") Integer is_sold,
 			@Param("productId") Integer productId, 
 			Pageable pageable);
-
+    
+    boolean existsBySerialNo(String serialNo);
 }

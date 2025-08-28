@@ -107,6 +107,8 @@ public class CustomerService implements ICustomerService  {
 		cv.setCompany_id(view.getCompany_id());
 		cv.setReason(view.getReason());
 		cv.setSerial_no(view.getSerial_no());
+		cv.setRaisedon_date(view.getRaisedon_date());
+		
 		
 		CompanyView f=companyviewrepository.save(cv);
 		if(f.getCustomer_id()!=null) {
