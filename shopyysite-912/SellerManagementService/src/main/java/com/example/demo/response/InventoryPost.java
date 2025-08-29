@@ -31,7 +31,16 @@ public class InventoryPost {
     
     private Integer is_sold;
     
-    public Integer getIs_sold() {
+    private String addedbatch_no;
+    public String getAddedbatch_no() {
+		return addedbatch_no;
+	}
+
+	public void setAddedbatch_no(String addedbatch_no) {
+		this.addedbatch_no = addedbatch_no;
+	}
+
+	public Integer getIs_sold() {
 		return is_sold;
 	}
 
