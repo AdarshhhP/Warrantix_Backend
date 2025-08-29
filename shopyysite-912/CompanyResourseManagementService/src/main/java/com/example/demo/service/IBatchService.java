@@ -1,6 +1,7 @@
 package com.example.demo.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -15,5 +16,5 @@ public interface IBatchService {
     List<BatchResponse> getAllBatches();
     public Batch getSerialByBatchNo(@RequestParam String BatchNo);
     CreateBatchResponse addSerialsToBatch(AddSerialRequest request);
-
+    public Optional<Batch> getBatchById(@RequestParam Integer batchId);
 }

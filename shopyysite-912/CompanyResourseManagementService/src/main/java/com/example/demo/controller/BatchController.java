@@ -20,27 +20,39 @@ public class BatchController {
 
     @Autowired
     private IBatchService batchService;
-
+    
+    // create new batch
     @PostMapping("/create")
     public ResponseEntity<BatchResponse> createBatch(@RequestBody BatchRequest request) {
         BatchResponse response = batchService.createBatch(request);
         return ResponseEntity.ok(response);
     }
     
+    // Get a list of all batches
     @GetMapping("/list")
     public ResponseEntity<List<BatchResponse>> listBatches() {
         List<BatchResponse> responses = batchService.getAllBatches();
         return ResponseEntity.ok(responses);
     }
     
+    // Get a batch by batch number
     @GetMapping("/getSerialByModelNo")
     public Batch getSerialByBatchNo(@RequestParam String BatchNo) {
     	return batchService.getSerialByBatchNo(BatchNo);
     }
-
+    
+    // Add serial numbers to an existing batch.
     @PostMapping("/add-serials")
     public ResponseEntity<CreateBatchResponse> addSerials(@RequestBody AddSerialRequest request) {
         return ResponseEntity.ok(batchService.addSerialsToBatch(request));
+    }
+    
+    // GET API to fetch batch details by batchId
+    @GetMapping("/batchId")
+    public ResponseEntity<Batch> getBatchById(@RequestParam Integer batchId) {
+        return batchService.getBatchById(batchId)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
 }

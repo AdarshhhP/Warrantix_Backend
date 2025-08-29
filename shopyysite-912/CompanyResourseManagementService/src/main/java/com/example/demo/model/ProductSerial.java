@@ -24,10 +24,22 @@ public class ProductSerial {
     private ProductDetails product;
 
     private String Model_No;
-    // Getters and setters
+    
     private Integer ItemsStatus = 1;
+    
+    @Column(name = "man_date")
+    private String man_date;
 
-    public Integer getItemsStatus() {
+    
+    public String getMan_date() {
+        return man_date;
+    }
+
+    public void setMan_date(String man_date) {
+        this.man_date = man_date;
+    }
+
+	public Integer getItemsStatus() {
 		return ItemsStatus;
 	}
 

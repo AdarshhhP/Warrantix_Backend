@@ -98,7 +98,13 @@ public class ProductDetails {
     }
 
     public void setMan_date(String man_date) {
-        Man_date = man_date;
+        this.Man_date = man_date;
+        // 🔥 sync man_date into all product serials
+        if (this.productSerials != null) {
+            for (ProductSerial serial : productSerials) {
+                serial.setMan_date(man_date);
+            }
+        }
     }
 
     public Integer getWarrany_tenure() {

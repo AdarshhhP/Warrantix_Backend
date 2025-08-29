@@ -106,21 +106,22 @@ public class CompanyMgtController {
 	public Boolean CheckEligibility(@RequestParam String Model_no,@RequestParam Integer checkvalue) {
 		return service.CheckEligibility(Model_no,checkvalue);
 	}
-	
+	// Get product details by product ID.
 	@GetMapping("/getProductDetailsByProductId")
 	public ProductDetails getProductDetailsByProductId(@RequestParam Integer productId) {
 		return service.getProductDetailsByProductId(productId);
 	}
+	// Change status of multiple product serials in bulk.
 	@PostMapping("/changeserialStatus")
 	public PostResponse ChangeMultipleSerialStatus(@RequestBody UpdateSerialStatusRequest requestbody) {
 		return service.ChangeMultipleSerialStatus(requestbody);
 	}
-	
+	// Change the status of a single item.
 	@PostMapping("/changeitemstatus")
 	public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemstatus) {
 		return service.ChangeItemStatus(changeitemstatus);
 	}
-	
+	// Fetch paginated list of product serials that are batched and unbatched.
 	@GetMapping("/not-sold")
     public Page<ProductSerial> getNotSoldSerials(
     		@RequestParam Integer is_sold,
@@ -130,4 +131,11 @@ public class CompanyMgtController {
 		Pageable pageable = PageRequest.of(page, size);
 		return service.getNotSoldSerials(is_sold,productId,pageable);
     }
+	// API to add quantity to an existing product
+	@PostMapping("/addQuantity")
+	public PostResponse addQuantity(
+	        @RequestParam Integer productId,
+	        @RequestParam Integer quantity) {
+	    return service.addQuantity(productId, quantity);
+	}
 }

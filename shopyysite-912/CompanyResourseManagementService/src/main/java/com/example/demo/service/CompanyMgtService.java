@@ -77,9 +77,11 @@ this.productSerialRepository = productSerialRepository;
 	            ProductSerial pserial = new ProductSerial();
 	            pserial.setModel_No(postedModelNo);
 	            pserial.setSerialNo(serialNo);
+	            pserial.setIs_sold(0); // Set default value
+	            pserial.setProduct(productDetails); // THIS IS CRUCIAL - sets the relationship
+	            pserial.setMan_date(productDetails.getMan_date());
 	            pserial.setIs_sold(0);
 	            pserial.setProduct(productDetails);
-
 	            generatedSerials.add(pserial);
 	        }
 
@@ -539,8 +541,62 @@ public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemsta
     return pr;
 }
 
-
+// Fetches a paginated list of product serials that are batched and unbatched 
 public Page<ProductSerial> getNotSoldSerials(Integer is_sold,Integer productId, Pageable pageable) {
 	return productSerialRepository.getNotSoldSerials(is_sold, productId, pageable);
 }
+
+@Override
+public PostResponse addQuantity(Integer productId, Integer quantity) {
+    PostResponse response = new PostResponse();
+
+    Optional<ProductDetails> productOpt = companyMgtRepository.findById(productId);
+
+    if (productOpt.isEmpty()) {
+        response.setStatusCode(404);
+        response.setMessage("Product not found");
+        return response;
+    }
+
+    if (quantity == null || quantity <= 0) {
+        response.setStatusCode(400);
+        response.setMessage("Quantity must be greater than zero");
+        return response;
+    }
+
+    ProductDetails product = productOpt.get();
+
+    // ✅ Update existing quantity
+    Integer existingQty = product.getQuantity() == null ? 0 : product.getQuantity();
+    product.setQuantity(existingQty + quantity);
+
+    // ✅ Generate new product serials
+    List<ProductSerial> newSerials = new ArrayList<>();
+    String modelNo = product.getModel_no();
+    Integer lastProdId = getLastProdId();
+    if (lastProdId == null) lastProdId = 0;
+
+    for (int i = 0; i < quantity; i++) {
+        int nextProdId = lastProdId + 1 + i; // unique increment
+        String serialNo = modelNo + nextProdId;
+
+        ProductSerial pserial = new ProductSerial();
+        pserial.setModel_No(modelNo);
+        pserial.setSerialNo(serialNo);
+        pserial.setIs_sold(0); // default unsold
+        pserial.setProduct(product);
+
+        newSerials.add(pserial);
+    }
+
+    product.getProductSerials().addAll(newSerials);
+
+    // ✅ Save product + serials (cascade takes care of serial persistence)
+    companyMgtRepository.save(product);
+
+    response.setStatusCode(200);
+    response.setMessage("Quantity & serials updated successfully. New Quantity: " + product.getQuantity());
+    return response;
+}
+
 }

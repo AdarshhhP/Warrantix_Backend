@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:postgresql://localhost:5432/CustomerCom
     username: postgres
-    password: Wow3password
+    password: postgres
 
   jpa:
     hibernate:

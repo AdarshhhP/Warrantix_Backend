@@ -13,10 +13,10 @@ import com.example.demo.model.ProductSerial;
 
 @Repository
 public interface ProductSerialRepository extends JpaRepository<ProductSerial, Long> {
-
+    // Custom query to fetch all ProductSerials by a given model number and a list of serial numbers.
     @Query("SELECT ps FROM ProductSerial ps WHERE ps.Model_No = :modelNo AND ps.serialNo IN :serialNos")
     List<ProductSerial> findByModelNoAndSerialNos(@Param("modelNo") String modelNo, @Param("serialNos") List<String> serialNos);
-    
+    // Fetches paginated ProductSerials
     @Query("SELECT u FROM ProductSerial u WHERE u.product.prod_id = :productId And u.is_sold = :is_sold")
 	Page<ProductSerial> getNotSoldSerials(
 			@Param("is_sold") Integer is_sold,
