@@ -5,6 +5,7 @@ import com.example.demo.model.BatchProductMap;
 import com.example.demo.payload.AddSerialRequest;
 import com.example.demo.payload.BatchRequest;
 import com.example.demo.payload.BatchResponse;
+import com.example.demo.payload.RemoveSerialRequest;
 import com.example.demo.repository.BatchRepository;
 import com.example.demo.repository.CompanyMgtRepository;
 import com.example.demo.response.CreateBatchResponse;
@@ -129,6 +130,44 @@ public class BatchService implements IBatchService {
     @Override
     public Optional<Batch> getBatchById(@RequestParam Integer batchId) {
         return batchRepository.findById(batchId);
+    }
+
+    //
+    @Override
+    public CreateBatchResponse removeSerialFromBatch(RemoveSerialRequest request) {
+        CreateBatchResponse response = new CreateBatchResponse();
+
+        // Find the batch
+        Batch batch = batchRepository.getSerialByBatchNumber(request.getBatchNo());
+        if (batch == null) {
+            response.setStatusCode(404);
+            response.setMessage("Batch not found");
+            return response;
+        }
+
+        // Find the serial mapping
+        BatchProductMap serialMap = batch.getSerialMappings().stream()
+                .filter(m -> m.getSerialNo().equals(request.getSerialNumber()))
+                .findFirst()
+                .orElse(null);
+
+        if (serialMap == null) {
+            response.setStatusCode(404);
+            response.setMessage("Serial number not found in this batch");
+            return response;
+        }
+
+        // Remove mapping
+        batch.getSerialMappings().remove(serialMap);
+
+        // If cascade is not enabled, explicitly delete from repository:
+        // batchProductMapRepository.delete(serialMap);
+
+        batchRepository.save(batch);
+
+        response.setStatusCode(200);
+        response.setMessage("Serial number removed successfully");
+        return response;
     }
 
 }

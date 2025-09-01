@@ -4,6 +4,7 @@ import com.example.demo.model.Batch;
 import com.example.demo.payload.AddSerialRequest;
 import com.example.demo.payload.BatchRequest;
 import com.example.demo.payload.BatchResponse;
+import com.example.demo.payload.RemoveSerialRequest;
 import com.example.demo.response.CreateBatchResponse;
 import com.example.demo.service.IBatchService;
 
@@ -53,6 +54,13 @@ public class BatchController {
         return batchService.getBatchById(batchId)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+    
+    // Post api for removing the serial number
+    @PostMapping("/remove-serial")
+    public ResponseEntity<CreateBatchResponse> removeSerial(@RequestBody RemoveSerialRequest request) {
+        CreateBatchResponse response = batchService.removeSerialFromBatch(request);
+        return ResponseEntity.status(response.getStatusCode()).body(response);
     }
 
 }
