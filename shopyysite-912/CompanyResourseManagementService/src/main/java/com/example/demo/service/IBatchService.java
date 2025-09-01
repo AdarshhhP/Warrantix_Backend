@@ -9,6 +9,7 @@ import com.example.demo.model.Batch;
 import com.example.demo.payload.AddSerialRequest;
 import com.example.demo.payload.BatchRequest;
 import com.example.demo.payload.BatchResponse;
+import com.example.demo.payload.RemoveSerialRequest;
 import com.example.demo.response.CreateBatchResponse;
 
 public interface IBatchService {
@@ -17,4 +18,5 @@ public interface IBatchService {
     public Batch getSerialByBatchNo(@RequestParam String BatchNo);
     CreateBatchResponse addSerialsToBatch(AddSerialRequest request);
     public Optional<Batch> getBatchById(@RequestParam Integer batchId);
+    public CreateBatchResponse removeSerialFromBatch(RemoveSerialRequest request);
 }
