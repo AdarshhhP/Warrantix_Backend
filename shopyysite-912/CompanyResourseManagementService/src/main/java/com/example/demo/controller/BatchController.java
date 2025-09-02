@@ -7,10 +7,13 @@ import com.example.demo.payload.BatchResponse;
 import com.example.demo.payload.RemoveSerialRequest;
 import com.example.demo.response.CreateBatchResponse;
 import com.example.demo.service.IBatchService;
-
+import org.springframework.data.domain.Page;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,9 +34,13 @@ public class BatchController {
     
     // Get a list of all batches
     @GetMapping("/list")
-    public ResponseEntity<List<BatchResponse>> listBatches() {
-        List<BatchResponse> responses = batchService.getAllBatches();
-        return ResponseEntity.ok(responses);
+    public Page<BatchResponse> listBatches(@RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+	    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "batch_id"));
+
+
+        return batchService.getAllBatches(pageable);
     }
     
     // Get a batch by batch number

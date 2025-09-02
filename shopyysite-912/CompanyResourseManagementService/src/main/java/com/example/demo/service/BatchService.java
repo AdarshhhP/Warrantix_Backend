@@ -12,6 +12,8 @@ import com.example.demo.response.CreateBatchResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -75,23 +77,26 @@ public class BatchService implements IBatchService {
 
     // Retrieves all batches with their serial numbers.
     @Override
-    public List<BatchResponse> getAllBatches() {
-        List<Batch> batches = batchRepository.findAll();
-        // Map Batch entities → BatchResponse DTOs
-        return batches.stream().map(batch -> {
+    public Page<BatchResponse> getAllBatches(Pageable pageable) {
+        Page<Batch> batches = batchRepository.getAllBatches(pageable);
+
+        // Map Batch → BatchResponse while preserving pagination
+        return batches.map(batch -> {
             BatchResponse response = new BatchResponse();
             response.setBatch_id(batch.getBatch_id());
             response.setModelNo(batch.getModel_no());
             response.setBatchNo(batch.getBatch_no());
             response.setCreatedDate(batch.getCreatedDate());
-            response.setSerialNo(batch.getSerialMappings()
-                .stream()
-                .map(BatchProductMap::getSerialNo)
-                .collect(Collectors.toList()));
+            response.setSerialNo(
+                batch.getSerialMappings()
+                    .stream()
+                    .map(BatchProductMap::getSerialNo)
+                    .collect(Collectors.toList())
+            );
             return response;
-        }).collect(Collectors.toList());
+        });
     }
-    
+
     // Retrieves a batch and its serial mappings by batch number.
     @Override
     public Batch getSerialByBatchNo(@RequestParam String BatchNo) {
