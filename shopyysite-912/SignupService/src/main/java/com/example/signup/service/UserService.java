@@ -82,6 +82,7 @@ public class UserService implements IUserService {
             obj.setUser_type(user.getUserType());
             obj.setUser_id(user.getUserId());
             obj.setUser_name(user.getUserName());
+            obj.setEmail(user.getEmail());
             return obj;
         }else {
         	obj.setJwt("");

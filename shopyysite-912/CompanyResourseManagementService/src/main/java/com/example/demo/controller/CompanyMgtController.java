@@ -55,6 +55,13 @@ public class CompanyMgtController {
 	public BulkUploadResponse bulkUploadProducts(@RequestParam("file") MultipartFile postedFile,@RequestParam Integer company_id) {
 	    return service.bulkUploadProducts(postedFile,company_id);
 	}
+	
+	@PostMapping("/getDataBySerial")
+	public List<ProductSerial> getDataBySerial(@RequestBody List<String> serialNos){
+		return service.getDataBySerial(serialNos);
+	}
+	
+//	@PostMapping("/")
  
 	// API to fetch paginated product list with filters like company ID, holder status, category, model number, and manufacture date
 	@GetMapping("/getProducts")
