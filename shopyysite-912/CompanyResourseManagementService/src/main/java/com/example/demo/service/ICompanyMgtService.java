@@ -38,5 +38,6 @@ public interface ICompanyMgtService {
 	public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemstatus);
 	public Page<ProductSerial> getNotSoldSerials(Integer is_sold,Integer productId, Pageable pageable);
 	PostResponse addQuantity(Integer productId, Integer quantity);
-
+	public List<ProductSerial> getDataBySerial(@RequestBody List<String> serialNos);
+	public ProductSerial ChangeSerialstatus(@RequestParam String serialNo);
 }

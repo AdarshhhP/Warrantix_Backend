@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.demo.model.ProductSerial;
 
@@ -23,5 +25,11 @@ public interface ProductSerialRepository extends JpaRepository<ProductSerial, Lo
 			@Param("productId") Integer productId, 
 			Pageable pageable);
     
+	@Query("SELECT u FROM ProductSerial u WHERE u.serialNo IN :serialNos")
+    public List<ProductSerial> getDataBySerial(@RequestBody List<String> serialNos);
+    
     boolean existsBySerialNo(String serialNo);
+    
+    @Query("Update ProductSerial p set p.is_sold = 1 where p.serialNo=:serialNo")
+    public ProductSerial ChangeSerialstatus(@Param("serialNo") String serialNo);
 }

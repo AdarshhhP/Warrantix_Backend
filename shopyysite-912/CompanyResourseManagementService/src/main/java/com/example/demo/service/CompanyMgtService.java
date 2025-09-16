@@ -187,7 +187,7 @@ return pr;
 	}
 	
 	// Bulk upload products from Excel file
-	public BulkUploadResponse bulkUploadProducts(MultipartFile postedFile,@RequestParam Integer company_id) {
+public BulkUploadResponse bulkUploadProducts(MultipartFile postedFile, @RequestParam Integer company_id) {
     BulkUploadResponse response = new BulkUploadResponse();
     List<ProductDetails> validProducts = new ArrayList<>();
     List<String> successRows = new ArrayList<>();
@@ -195,23 +195,24 @@ return pr;
     
     response.setSuccessRecords(successRows);
     response.setFailedRecords(failedRows);
- 
+
     // Check if file is valid
     if (postedFile == null || postedFile.isEmpty()) {
         response.setStatusCode(400);
         response.setMessage("No file uploaded");
         return response;
     }
+    
     // Check file extension
     String fileName = postedFile.getOriginalFilename();
     String extension = fileName.substring(fileName.lastIndexOf(".")).toLowerCase();
- 
+
     if (!extension.equals(".xls") && !extension.equals(".xlsx")) {
         response.setStatusCode(415);
         response.setMessage("Only Excel files (.xls, .xlsx) are allowed");
         return response;
     }
- 
+
     try (InputStream is = postedFile.getInputStream()) {
         Workbook workbook = extension.equals(".xls") ? new HSSFWorkbook(is) : new XSSFWorkbook(is);
         Sheet sheet = workbook.getSheetAt(0);
@@ -222,38 +223,39 @@ return pr;
             response.setMessage("Empty Excel file");
             return response;
         }
- 
-        // Validate header row
+
+        // Validate header row - UPDATED FOR NEW FIELDS
         Row headerRow = sheet.getRow(0);
         if (!validateHeaderRow(headerRow)) {
             response.setStatusCode(400);
             response.setMessage("Invalid template format. Please download the latest template.");
             return response;
         }
- 
+
         // Loop through rows
         for (int i = 1; i <= sheet.getLastRowNum(); i++) {
             Row row = sheet.getRow(i);
             if (row == null) continue;
- 
+
             String rowIdentifier = "Row " + (i + 1);
             try {
-                ProductDetails product = parseProductRow(row, rowIdentifier,company_id);
+                ProductDetails product = parseProductRow(row, rowIdentifier, company_id);
                 validateProduct(product, rowIdentifier);
                 
                 // Handle image URLs
-                String imageUrls = getCellValue(row, 6); // Assuming column 8
+                String imageUrls = getCellValue(row, 6); // Assuming column 7 for images
                 if (imageUrls != null && !imageUrls.trim().isEmpty()) {
                     String[] urlArray = imageUrls.split(",");
-                    System.out.println("" + urlArray);  // log success
- 
                     
                     for (String url : urlArray) {
                         if (!url.trim().isEmpty()) {
-                            processProductImage(product, url.trim(), rowIdentifier,failedRows);
+                            processProductImage(product, url.trim(), rowIdentifier, failedRows);
                         }
                     }
                 }
+                
+                // Generate serial numbers based on quantity
+                generateProductSerials(product);
                 
                 successRows.add(product.getProduct_name() + " - Ready for upload");
                 validProducts.add(product);
@@ -261,13 +263,13 @@ return pr;
                 failedRows.add(rowIdentifier + ": " + e.getMessage());
             }
         }
- 
+
         // Save valid products
         if (!validProducts.isEmpty()) {
             companyMgtRepository.saveAll(validProducts);
             successRows.replaceAll(s -> s.replace("Ready for upload", "Uploaded successfully"));
         }
- 
+
         response.setStatusCode(200);
         response.setMessage(String.format(
             "Processed %d rows. Success: %d, Failed: %d",
@@ -275,12 +277,12 @@ return pr;
             validProducts.size(),
             failedRows.size()
         ));
- 
+
     } catch (Exception e) {
         response.setStatusCode(500);
         response.setMessage("Error processing file: " + e.getMessage());
     }
- 
+
     return response;
 }
  
@@ -295,17 +297,18 @@ private boolean validateHeaderRow(Row headerRow) {
            getCellValue(headerRow, 3).equalsIgnoreCase("Product_price") &&
            getCellValue(headerRow, 4).equalsIgnoreCase("Man_date") &&
            getCellValue(headerRow, 5).equalsIgnoreCase("Warrany_tenure") &&
-           getCellValue(headerRow, 6).equalsIgnoreCase("Image_URL");
+           getCellValue(headerRow, 6).equalsIgnoreCase("Image_URL") &&
+           getCellValue(headerRow, 7).equalsIgnoreCase("Quantity") &&      // NEW FIELD
+           getCellValue(headerRow, 8).equalsIgnoreCase("Item");           // NEW FIELD
 }
 //to parse and return data in each row
-private ProductDetails parseProductRow(Row row, String rowIdentifier,Integer company_id) throws Exception {
+private ProductDetails parseProductRow(Row row, String rowIdentifier, Integer company_id) throws Exception {
     ProductDetails product = new ProductDetails();
     
     try {
         product.setModel_no(getCellValue(row, 0));
         product.setProduct_name(getCellValue(row, 1));
         
-//        product.setProduct_category(getCellValue(row, 2));
         // Map category to ID
         String category = getCellValue(row, 2).trim();
         switch (category.toLowerCase()) {
@@ -332,8 +335,14 @@ private ProductDetails parseProductRow(Row row, String rowIdentifier,Integer com
         product.setMan_date(dateStr);
         
         product.setWarrany_tenure(parseIntSafe(getCellValue(row, 5), "Warranty Tenure"));
+        
+        // NEW FIELDS: Quantity and Item
+        product.setQuantity(parseIntSafe(getCellValue(row, 7), "Quantity"));
+        product.setItem(getCellValue(row, 8));
+        
         product.setCompany_id(company_id);
         product.setProductImages(new ArrayList<>());
+        product.setHolderStatus(1); // Default value
         
         return product;
     } catch (Exception e) {
@@ -358,6 +367,10 @@ private void validateProduct(ProductDetails product, String rowIdentifier) throw
         throw new Exception("Product Name is required");
     }
     
+    if (product.getQuantity() == null || product.getQuantity() <= 0) {
+        throw new Exception("Quantity must be greater than 0");
+    }
+    
     if (getProductDetailsByModelNo(product.getModel_no()) != null) {
         throw new Exception("Model No already exists: " + product.getModel_no());
     }
@@ -376,7 +389,36 @@ private void processProductImage(ProductDetails product, String imageUrl, String
         failedRows.add(rowIdentifier + ": Image download failed for URL " + imageUrl + " - " + e.getMessage());
     }
 }
+private void generateProductSerials(ProductDetails product) throws Exception {
+    String postedModelNo = product.getModel_no();
+    List<ProductSerial> generatedSerials = new ArrayList<>();
+    Integer quantity = product.getQuantity();
 
+    if (quantity == null || quantity <= 0) {
+        throw new Exception("Quantity must be greater than 0");
+    }
+
+    for (int i = 0; i < quantity; i++) {
+        String serialNo;
+        do {
+            String randomPart = SerialGenerator.generateRandomCode(8); // e.g. 8 chars
+            serialNo = postedModelNo + "#" + randomPart;
+        } while (productSerialRepository.existsBySerialNo(serialNo)); // ensure uniqueness
+
+        ProductSerial pserial = new ProductSerial();
+        pserial.setModel_No(postedModelNo);
+        pserial.setSerialNo(serialNo);
+        pserial.setIs_sold(0); // Set default value
+        pserial.setProduct(product); // Set the relationship
+        pserial.setMan_date(product.getMan_date());
+        pserial.setItemsStatus(1); // Default value
+        //pserial.set(product.getItem()); // Set item from product
+        
+        generatedSerials.add(pserial);
+    }
+
+    product.setProductSerials(generatedSerials);
+}
 //Convert image URL to base64 string
 private String downloadAndConvertToBase64(String imageUrl) throws IOException {
     URL url = new URL(imageUrl);
@@ -469,8 +511,9 @@ public ProductDetails getProductDetailsByModelNo(@RequestParam String Model_no) 
 //Get product details by model number (without images)
 @Override
 public ProductDetails getProductDetailsByModelNoImage(@RequestParam String Model_no) {
+	System.out.println(Model_no+"Model_no jjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj");
 	ProductDetails Pd = companyMgtRepository.getProductDetailsByModelNo(Model_no);
-	Pd.setProductImages(new ArrayList<>());
+	//Pd.setProductImages(new ArrayList<>());
 	return Pd;
 }
 
@@ -478,6 +521,11 @@ public ProductDetails getProductDetailsByModelNoImage(@RequestParam String Model
 @Override
 public List<ProductDetails> getProductsByModelNos(@RequestParam List<String> modelNos){
 	return companyMgtRepository.getProductsByModelNos(modelNos);
+}
+
+@Override
+public ProductSerial ChangeSerialstatus(@RequestParam String serialNo) {
+	return productSerialRepository.ChangeSerialstatus(serialNo);
 }
 
 //Checks product eligibility using model number and validation flag.
@@ -546,6 +594,10 @@ public Page<ProductSerial> getNotSoldSerials(Integer is_sold,Integer productId, 
 	return productSerialRepository.getNotSoldSerials(is_sold, productId, pageable);
 }
 
+public List<ProductSerial> getDataBySerial(@RequestBody List<String> serialNos){
+	return productSerialRepository.getDataBySerial(serialNos);
+}
+
 @Override
 public PostResponse addQuantity(Integer productId, Integer quantity) {
     PostResponse response = new PostResponse();
@@ -577,17 +629,27 @@ public PostResponse addQuantity(Integer productId, Integer quantity) {
     if (lastProdId == null) lastProdId = 0;
 
     for (int i = 0; i < quantity; i++) {
-        int nextProdId = lastProdId + 1 + i; // unique increment
-        String serialNo = modelNo + nextProdId;
-
         ProductSerial pserial = new ProductSerial();
         pserial.setModel_No(modelNo);
-        pserial.setSerialNo(serialNo);
         pserial.setIs_sold(0); // default unsold
         pserial.setProduct(product);
 
+        // ✅ set current date (yyyy-MM-dd)
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        String today = LocalDate.now().format(formatter);
+        pserial.setMan_date(today);
+
+        // ✅ generate random unique serial number
+        String serialNo;
+        do {
+            String randomPart = SerialGenerator.generateRandomCode(8); // 8-char random
+            serialNo = modelNo + "#" + randomPart; // attach model prefix
+        } while (productSerialRepository.existsBySerialNo(serialNo));
+        pserial.setSerialNo(serialNo);
+
         newSerials.add(pserial);
     }
+
 
     product.getProductSerials().addAll(newSerials);
 
