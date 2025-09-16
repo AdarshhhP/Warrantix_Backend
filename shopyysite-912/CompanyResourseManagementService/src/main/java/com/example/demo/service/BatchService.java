@@ -123,20 +123,7 @@ public class BatchService implements IBatchService {
             return response;
         }
 
-        // Add new serial numbers
-        for (String serial : request.getSerialNumbers()) {
-            BatchProductMap map = new BatchProductMap();
-            map.setSerialNo(serial);
-            map.setBatch(batch);
-            batch.getSerialMappings().add(map);
-            
-            // ✅ Update ProductSerial status to batched
-            productSerialRepository.updateSerialStatus(serial, 1);
-        // Ensure serialMappings is initialized
-        if (batch.getSerialMappings() == null) {
-            batch.setSerialMappings(new ArrayList<>());
-
-        // Ensure serialMappings is initialized
+        // ✅ Ensure serialMappings is initialized
         if (batch.getSerialMappings() == null) {
             batch.setSerialMappings(new ArrayList<>());
         }
@@ -151,6 +138,9 @@ public class BatchService implements IBatchService {
                 map.setSerialNo(serial);
                 map.setBatch(batch);
                 batch.getSerialMappings().add(map);
+
+                // ✅ Update ProductSerial status to "batched"
+                productSerialRepository.updateSerialStatus(serial, 1);
             }
         }
 
@@ -159,16 +149,9 @@ public class BatchService implements IBatchService {
 
         response.setStatusCode(200);
         response.setMessage("Serial numbers added successfully");
-//        response.setBatchNo(batch.getBatch_no());
-//        response.setModelNo(batch.getModel_no());
-//        response.setSerialNo(
-//                batch.getSerialMappings().stream()
-//                        .map(BatchProductMap::getSerialNo)
-//                        .collect(Collectors.toList())
-//        );
-
         return response;
     }
+
 
 
     // Get Api for getting the list by batch_id
