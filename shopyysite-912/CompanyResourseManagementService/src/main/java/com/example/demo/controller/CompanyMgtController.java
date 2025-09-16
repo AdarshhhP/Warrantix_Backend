@@ -65,7 +65,8 @@ public class CompanyMgtController {
 	        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate manDate,
 	        @RequestParam(defaultValue = "0") int page,
 	        @RequestParam(defaultValue = "10") int size,
-	        @RequestParam(required = false) String ModelNo
+	        @RequestParam(required = false) String ModelNo,
+	        @RequestParam(required = false) String productName
 			)
 	{
  
@@ -74,7 +75,7 @@ public class CompanyMgtController {
  
  
 	    Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "prod_id"));
-	    return service.getProducts(company_id, holderStatus, sanitizedCategory,sanitizedModelNo, manDate, pageable);
+	    return service.getProducts(company_id, holderStatus, sanitizedCategory,sanitizedModelNo, productName,manDate,pageable);
 	}
 	
 	// API to fetch product details by model number
@@ -127,9 +128,11 @@ public class CompanyMgtController {
     		@RequestParam Integer is_sold,
     		@RequestParam(defaultValue = "0") int page,
 	        @RequestParam(defaultValue = "10") int size,
-	        @RequestParam Integer productId) {
+	        @RequestParam(required = false) String serialNo,
+	        @RequestParam Integer productId)
+	{
 		Pageable pageable = PageRequest.of(page, size);
-		return service.getNotSoldSerials(is_sold,productId,pageable);
+		return service.getNotSoldSerials(is_sold,serialNo,productId,pageable);
     }
 	// API to add quantity to an existing product
 	@PostMapping("/addQuantity")
@@ -138,4 +141,9 @@ public class CompanyMgtController {
 	        @RequestParam Integer quantity) {
 	    return service.addQuantity(productId, quantity);
 	}
+	
+//	@PostMapping("/batch/{serialNo}")
+//    public String changeSerialStatus(@PathVariable String serialNo) {
+//        return service.ChangeSerialstatus(serialNo);
+//    }
 }

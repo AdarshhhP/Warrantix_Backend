@@ -455,8 +455,8 @@ private String downloadAndConvertToBase64(String imageUrl) throws IOException {
  
 	// Get products with filters and pagination
 	@Override
-	public Page<ProductDetails> getProducts(Integer companyId, Integer holderStatus, String productCategory, String ModelNo, LocalDate manDate, Pageable pageable) {
-		return companyMgtRepository.getProducts(companyId, holderStatus, productCategory,ModelNo, manDate, pageable);
+	public Page<ProductDetails> getProducts(Integer companyId, Integer holderStatus, String productCategory, String ModelNo, String productName,LocalDate manDate, Pageable pageable) {
+		return companyMgtRepository.getProducts(companyId, holderStatus, productCategory,ModelNo, productName,manDate, pageable);
 	}
  
  
@@ -542,8 +542,11 @@ public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemsta
 }
 
 // Fetches a paginated list of product serials that are batched and unbatched 
-public Page<ProductSerial> getNotSoldSerials(Integer is_sold,Integer productId, Pageable pageable) {
-	return productSerialRepository.getNotSoldSerials(is_sold, productId, pageable);
+public Page<ProductSerial> getNotSoldSerials(Integer is_sold, String serialNo, Integer productId, Pageable pageable) {
+    if (serialNo != null && !serialNo.trim().isEmpty()) {
+        return productSerialRepository.searchNotSoldSerials(is_sold, serialNo, productId, pageable);
+    }
+    return productSerialRepository.getNotSoldSerials(is_sold, productId, pageable);
 }
 
 @Override
@@ -598,5 +601,16 @@ public PostResponse addQuantity(Integer productId, Integer quantity) {
     response.setMessage("Quantity & serials updated successfully. New Quantity: " + product.getQuantity());
     return response;
 }
+
+//@Override
+//public String ChangeSerialstatus(String serialNo) {
+//    int updated = productSerialRepository.ChangeSerialstatus(serialNo);
+//    if (updated > 0) {
+//        return "Serial number " + serialNo + " batched successfully.";
+//    } else {
+//        return "Serial number not found or already batched.";
+//    }
+//}
+
 
 }

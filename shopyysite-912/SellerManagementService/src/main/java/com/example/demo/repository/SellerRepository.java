@@ -2,6 +2,7 @@ package com.example.demo.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -38,5 +39,9 @@ public interface SellerRepository extends JpaRepository<InventoryItem, Integer> 
 		    @Param("purchaseDate") LocalDate purchaseDate,
 		    Pageable pageable
 		);
+
+	@Query("SELECT i FROM InventoryItem i WHERE i.serial_no = :serialNo")
+	Optional<InventoryItem> findBySerialNo(@Param("serialNo") String serialNo);
+
 
 }

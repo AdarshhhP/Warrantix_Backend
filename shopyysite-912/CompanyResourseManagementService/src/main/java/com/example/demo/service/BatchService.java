@@ -8,6 +8,7 @@ import com.example.demo.payload.BatchResponse;
 import com.example.demo.payload.RemoveSerialRequest;
 import com.example.demo.repository.BatchRepository;
 import com.example.demo.repository.CompanyMgtRepository;
+import com.example.demo.repository.ProductSerialRepository;
 import com.example.demo.response.CreateBatchResponse;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,8 @@ public class BatchService implements IBatchService {
     private CompanyMgtRepository productRepository;
     @Autowired
     private BatchRepository batchRepository;
+    @Autowired
+    private ProductSerialRepository productSerialRepository;
 
     // Creates a new batch for a given model number.
     @Override
@@ -122,6 +125,9 @@ public class BatchService implements IBatchService {
             map.setSerialNo(serial);
             map.setBatch(batch);
             batch.getSerialMappings().add(map);
+            
+            // ✅ Update ProductSerial status to batched
+            productSerialRepository.updateSerialStatus(serial, 1);
         }
         // Save updated batch
         batchRepository.save(batch);
@@ -137,7 +143,7 @@ public class BatchService implements IBatchService {
         return batchRepository.findById(batchId);
     }
 
-    //
+    // Post Api for removing serial from batch
     @Override
     public CreateBatchResponse removeSerialFromBatch(RemoveSerialRequest request) {
         CreateBatchResponse response = new CreateBatchResponse();

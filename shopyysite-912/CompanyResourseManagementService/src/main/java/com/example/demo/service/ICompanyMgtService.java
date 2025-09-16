@@ -21,7 +21,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 
 public interface ICompanyMgtService {
 	public PostResponse postProduct(ProductDetails productDetails);
-	public Page<ProductDetails> getProducts(@RequestParam Integer companyId, Integer holderStatus, String productCategory,String ModelNo,
+	public Page<ProductDetails> getProducts(@RequestParam Integer companyId, Integer holderStatus, String productCategory,String ModelNo, String productName,
 		    LocalDate manDate, Pageable pageable);
 	public ProductDetails getProductDetailsByModelNo(@RequestParam String Model_no);
 	public ProductDetails getProductDetailsByModelNoImage(@RequestParam String Model_no);
@@ -36,7 +36,7 @@ public interface ICompanyMgtService {
 	
 	public PostResponse ChangeMultipleSerialStatus(@RequestBody UpdateSerialStatusRequest requestBody);
 	public PostResponse ChangeItemStatus(@RequestBody ChangeItemStatus changeitemstatus);
-	public Page<ProductSerial> getNotSoldSerials(Integer is_sold,Integer productId, Pageable pageable);
+	public Page<ProductSerial> getNotSoldSerials(Integer is_sold,String serialNo,Integer productId, Pageable pageable);
 	PostResponse addQuantity(Integer productId, Integer quantity);
-
+//	public ProductSerial ChangeSerialstatus(@RequestParam String serialNo);
 }
