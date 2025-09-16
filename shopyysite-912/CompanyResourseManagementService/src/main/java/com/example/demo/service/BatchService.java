@@ -8,17 +8,21 @@ import com.example.demo.payload.BatchResponse;
 import com.example.demo.payload.RemoveSerialRequest;
 import com.example.demo.repository.BatchRepository;
 import com.example.demo.repository.CompanyMgtRepository;
+import com.example.demo.repository.ProductSerialRepository;
 import com.example.demo.response.CreateBatchResponse;
 
 import jakarta.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.ArrayList;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -30,6 +34,8 @@ public class BatchService implements IBatchService {
     private CompanyMgtRepository productRepository;
     @Autowired
     private BatchRepository batchRepository;
+    @Autowired
+    private ProductSerialRepository productSerialRepository;
 
     // Creates a new batch for a given model number.
     @Override
@@ -109,7 +115,7 @@ public class BatchService implements IBatchService {
     public CreateBatchResponse addSerialsToBatch(AddSerialRequest request) {
         CreateBatchResponse response = new CreateBatchResponse();
 
-        // Find batch
+        // Find the batch by batch number
         Batch batch = batchRepository.getSerialByBatchNumber(request.getBatchNo());
         if (batch == null) {
             response.setStatusCode(404);
@@ -117,7 +123,7 @@ public class BatchService implements IBatchService {
             return response;
         }
 
-        // Ensure serialMappings is initialized
+        // ✅ Ensure serialMappings is initialized
         if (batch.getSerialMappings() == null) {
             batch.setSerialMappings(new ArrayList<>());
         }
@@ -132,6 +138,9 @@ public class BatchService implements IBatchService {
                 map.setSerialNo(serial);
                 map.setBatch(batch);
                 batch.getSerialMappings().add(map);
+
+                // ✅ Update ProductSerial status to "batched"
+                productSerialRepository.updateSerialStatus(serial, 1);
             }
         }
 
@@ -140,16 +149,9 @@ public class BatchService implements IBatchService {
 
         response.setStatusCode(200);
         response.setMessage("Serial numbers added successfully");
-//        response.setBatchNo(batch.getBatch_no());
-//        response.setModelNo(batch.getModel_no());
-//        response.setSerialNo(
-//                batch.getSerialMappings().stream()
-//                        .map(BatchProductMap::getSerialNo)
-//                        .collect(Collectors.toList())
-//        );
-
         return response;
     }
+
 
 
     // Get Api for getting the list by batch_id
@@ -158,7 +160,7 @@ public class BatchService implements IBatchService {
         return batchRepository.findById(batchId);
     }
 
-    //
+    // Post Api for removing serial from batch
     @Override
     public CreateBatchResponse removeSerialFromBatch(RemoveSerialRequest request) {
         CreateBatchResponse response = new CreateBatchResponse();

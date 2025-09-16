@@ -17,6 +17,11 @@ public interface PurchaseRepository extends JpaRepository<PurchaseTable,Integer>
 //	@Query("Select u from PurchaseTable u where u.seller_id = :Seller_Id And u.is_deleted=0")
 //	public List<PurchaseTable> GetPurchases(@RequestParam Integer Seller_Id);
 	
+	@Query("SELECT COUNT(p) > 0 FROM PurchaseTable p WHERE p.SerialNo = :serialNo AND p.is_deleted = :isDeleted")
+	boolean existsBySerialNoAndIsDeleted(@Param("serialNo") String serialNo, @Param("isDeleted") Integer isDeleted);
+
+//	boolean existsBySerial_noAndIsDeleted(String serial_no, Integer isDeleted);
+	
 	// Get paginated list of purchases with optional filters for seller ID and model number
 	@Query("SELECT p FROM PurchaseTable p " +
 		       "WHERE p.is_deleted = 0 " +
