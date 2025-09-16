@@ -9,8 +9,24 @@ public class LoginResponse {
     private Integer user_type;
     private Integer users_id;
     private String user_name;
-    
-    public String getUser_name() {
+    private String email;
+    public Integer getUsers_id() {
+		return users_id;
+	}
+
+	public void setUsers_id(Integer users_id) {
+		this.users_id = users_id;
+	}
+
+	public String getEmail() {
+		return email;
+	}
+
+	public void setEmail(String email) {
+		this.email = email;
+	}
+
+	public String getUser_name() {
 		return user_name;
 	}
 

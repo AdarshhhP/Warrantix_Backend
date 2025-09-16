@@ -43,6 +43,11 @@ public class BatchController {
         return batchService.getAllBatches(pageable);
     }
     
+    @GetMapping("/getModelByBatchNo")
+    public Batch getModelBySerialNo(@RequestParam String BatchNo) {
+    	return batchService.getModelBySerialNo(BatchNo);
+    }
+    
     // Get a batch by batch number
     @GetMapping("/getSerialByModelNo")
     public Batch getSerialByBatchNo(@RequestParam String BatchNo) {

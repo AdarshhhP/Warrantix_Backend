@@ -10,6 +10,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.demo.model.ProductSerial;
 
@@ -53,4 +55,9 @@ public interface ProductSerialRepository extends JpaRepository<ProductSerial, Lo
     @Transactional // ensure transaction boundary
     @Query("UPDATE ProductSerial p SET p.is_sold = :status WHERE p.serialNo = :serialNo")
     int updateSerialStatus(@Param("serialNo") String serialNo, @Param("status") Integer status);
+	@Query("SELECT u FROM ProductSerial u WHERE u.serialNo IN :serialNos")
+    public List<ProductSerial> getDataBySerial(@RequestBody List<String> serialNos);
+        
+    @Query("Update ProductSerial p set p.is_sold = 1 where p.serialNo=:serialNo")
+    public ProductSerial ChangeSerialstatus(@Param("serialNo") String serialNo);
 }

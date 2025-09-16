@@ -21,4 +21,7 @@ public interface BatchRepository extends JpaRepository<Batch, Integer>{
 	
 	@Query("Select b from Batch b")
 	Page<Batch>getAllBatches(Pageable pagaeble);
+	
+	@Query("Select b from Batch b where b.batch_no=:BatchNo")
+    Batch getModelBySerialNo(@RequestParam String BatchNo);
 } 

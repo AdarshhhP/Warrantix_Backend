@@ -20,4 +20,5 @@ public interface IBatchService {
     CreateBatchResponse addSerialsToBatch(AddSerialRequest request);
     public Optional<Batch> getBatchById(@RequestParam Integer batchId);
     public CreateBatchResponse removeSerialFromBatch(RemoveSerialRequest request);
+    public Batch getModelBySerialNo(@RequestParam String BatchNo);
 }

@@ -27,7 +27,9 @@ import com.example.demo.response.BulkUploadResponse;
 import com.example.demo.response.InventoryPost;
 import com.example.demo.response.PostResponse;
 import com.example.demo.response.ResponseModelData;
-
+import com.example.demo.response.SerialResponseByBatchNo;
+import com.example.demo.response.SerialResponseByBatchNo.SerialMapping;
+import com.example.demo.model.BulkUploadInventoryRow;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
@@ -162,22 +164,48 @@ public class SellerService implements ISellerService {
 
                  String rowLabel = "Row " + (i + 1);
                  try {
-                	 // Parse row into InventoryItem object
-                     InventoryItem item = parseInventoryRow(row, rowLabel, sellerId);
-                     // Validate content of the row
-                     validateItem(item, rowLabel);
-                     // Check if item already exists (by model number)
-                     if(validateModelNoPurchases(item.getModel_no())!=true) {
-                     validItems.add(item); // Add to valid list
-                     successRows.add(item.getModel_no() + " added successfully");
-                     String url = "http://localhost:1089/changeholderstatus?Model_no=" + item.getModel_no() + "&status=" + 2;
-	   	              restTemplate.postForObject(url, null, PostResponse.class);
-                    
-                    }
-                     else {
-                         failedRows.add(item.getModel_no()+" failed: " + "Item already exist");
-                     }
-                 } catch (Exception e) {
+                	    // Parse serial numbers for the batch
+                	    String[] serialNos = parseInventorySerials(row, rowLabel, sellerId);
+
+                	    // Get model number (if needed separately)
+                	    String modelNo = getModelByBatchNo(row, rowLabel, sellerId);
+                	    for (String serialNo : serialNos) {
+                	        // Parse row into InventoryItem object for each serial number
+                	        InventoryItem item = parseInventoryRow(row, rowLabel, sellerId, serialNo,modelNo);
+
+                	        // ✅ Example validation (uncomment as per your logic)
+                	        // validateItem(item, rowLabel);
+
+                	        // ✅ Check if item already exists (by model number)
+                	        if (item.getModel_no()!=null) {
+                	            validItems.add(item); // Add to valid list
+                	            successRows.add(item.getModel_no() + " added successfully");
+
+                	            
+                	         // === Call changeitemstatus API ===
+                                String urls = "http://localhost:1089/changeitemstatus";
+            
+                                Map<String, Object> requestBody = Map.of(
+                                    "serialNos", List.of(serialNo),  // take serialNo from Excel row
+                                    "itemStatus", 2,                 // your status value
+                                    "modelNo", modelNo
+                                );
+            
+                                try {
+                                    restTemplate.postForObject(urls, requestBody, Void.class);
+                                } catch (Exception ex) {
+                                    failedRows.add(serialNo + ": Failed to update item status (" + ex.getMessage() + ")");
+                                }
+                	            
+                	            // ✅ Update holder status
+                	            String url = "http://localhost:1089/changeholderstatus?Model_no=" 
+                	                        + item.getModel_no() + "&status=2";
+                	            restTemplate.postForObject(url, null, PostResponse.class);
+                	        } else {
+                	            failedRows.add(item.getModel_no() + " failed: Item already exists");
+                	        }
+                	    }
+                	} catch (Exception e) {
                 	// Log parsing or validation errors for the row
                      failedRows.add(rowLabel + " failed: " + e.getMessage());
                  }
@@ -196,9 +224,39 @@ public class SellerService implements ISellerService {
              response.setStatusCode(500);
              response.setMessage("Error reading Excel: " + e.getMessage());
          }
-
          return response;
      }
+	 
+	 private String[] parseInventorySerials(Row row, String rowLabel, Integer sellerId) throws Exception {
+		    String batchNo = getCellValue(row, 0);
+
+		    String url = "http://localhost:1089/api/batch/getModelByBatchNo?BatchNo={batchNo}";
+		    SerialResponseByBatchNo response = restTemplate.getForObject(url, SerialResponseByBatchNo.class, batchNo);
+
+		    if (response == null || response.getBatch_no() == null) {
+		        throw new Exception("Product not found for batch number: " + batchNo);
+		    }
+
+		    // ✅ Extract serial numbers
+		    List<String> serialNos = response.getSerialMappings()
+		                                     .stream()
+		                                     .map(SerialResponseByBatchNo.SerialMapping::getSerialNo)
+		                                     .toList();
+		    // ✅ Return as array
+		    return serialNos.toArray(new String[0]);
+		}
+	  private String getModelByBatchNo(Row row, String rowLabel, Integer sellerId) throws Exception {
+		    String batchNo = getCellValue(row, 0);
+		    String url = "http://localhost:1089/api/batch/getModelByBatchNo?BatchNo={batchNo}";
+		    SerialResponseByBatchNo response = restTemplate.getForObject(url, SerialResponseByBatchNo.class, batchNo);
+		    if (response == null || response.getBatch_no() == null) {
+		        throw new Exception("Product not found for batch number: " + batchNo);
+		    }
+		    
+		    return response.getModel_no();
+	    	 
+	     }
+
   
 	 // // Check if a model_no already exists in inventory
      private boolean validateModelNoPurchases(String modelNo) {
@@ -211,44 +269,44 @@ public class SellerService implements ISellerService {
      
      // Check if Excel header for inventory is valid
      private boolean validateHeaderRow(Row row) {
-         return getCellValue(row, 0).equalsIgnoreCase("Model_no") &&
-                getCellValue(row, 1).equalsIgnoreCase("Warranty") &&
-                getCellValue(row, 2).equalsIgnoreCase("Purchase_date") &&
-                getCellValue(row, 3).equalsIgnoreCase("Price");
+         return getCellValue(row, 0).equalsIgnoreCase("Batch_no") &&
+                getCellValue(row, 1).equalsIgnoreCase("Purchase_date");
      }
 
+   
+
      // Parse one row of Excel into InventoryItem object
-     private InventoryItem parseInventoryRow(Row row, String rowLabel, Integer sellerId) throws Exception {
-    	  String modelNo = getCellValue(row, 0);
+     private InventoryItem parseInventoryRow(Row row, String rowLabel, Integer sellerId,String serialNo,String ModelNo) throws Exception {
+    	  String batchNo = getCellValue(row, 0);
+    	  String puchaseDate = getCellValue(row, 1);
 
-    	    String url = "http://localhost:1089/getProductDetailsByModelNoNoimage?Model_no={modelNo}";
+    	    String url = "http://localhost:1089/getProductDetailsByModelNoNoimage?Model_no={ModelNo}";
+    	    ResponseModelData response = restTemplate.getForObject(url, ResponseModelData.class, ModelNo);
+//    	    if (response == null) {
+//    	        throw new Exception("Product not found for model number: " + response.getModel_no());
+//    	    }
 
-    	    ResponseModelData response = restTemplate.getForObject(url, ResponseModelData.class, modelNo);
-    	    
-    	    if (response == null || response.getCompany_id() == null) {
-    	        throw new Exception("Product not found for model number: " + modelNo);
-    	        
-    	    }
          InventoryItem item = new InventoryItem();
          try {
-             item.setModel_no(getCellValue(row, 0));
+        	 item.setSerial_no(serialNo);
+             item.setModel_no(ModelNo);
              item.setCompany_id(response.getCompany_id());
-             item.setWarranty((int) Double.parseDouble(getCellValue(row, 1)));
-             String dateStr = getCellValue(row, 2);
-             item.setPurchase_date(LocalDate.parse(dateStr));
-             item.setPrice((int) Double.parseDouble(getCellValue(row, 3)));
-             String category=getCellValue(row, 2);
-             if(category=="Plastic") {
-                 item.setCategory_id(2);
-             }else if(category=="Electronics") {
-                 item.setCategory_id(1);
-             }else if(category=="Wood") {
-                 item.setCategory_id(3);
-             }else if(category=="Metal"){
-                 item.setCategory_id(4);
-             }else {
-                 item.setCategory_id(5);
-             }
+             item.setPrice(response.getProduct_price());
+             item.setWarranty(response.getWarrany_tenure());             
+             String category=response.getProduct_category();
+           if(category=="Plastic") {
+               item.setCategory_id(2);
+           }else if(category=="Electronics") {
+               item.setCategory_id(1);
+           }else if(category=="Wood") {
+               item.setCategory_id(3);
+           }else if(category=="Metal"){
+               item.setCategory_id(4);
+           }else {
+               item.setCategory_id(5);
+           }
+           item.setPurchase_date(LocalDate.parse(puchaseDate));
+           item.setAddedbatch_no(batchNo);
              item.setIs_deleted(0);
              item.setSeller_id(sellerId);
          } catch (Exception e) {
@@ -258,12 +316,12 @@ public class SellerService implements ISellerService {
      }
 
      // Validate required fields of inventory
-     private void validateItem(InventoryItem item, String rowLabel) throws Exception {
-         if (item.getModel_no() == null || item.getModel_no().isEmpty()) {
-             throw new Exception("Model_no is required");
+     private void validateItem(BulkUploadInventoryRow item, String rowLabel) throws Exception {
+         if (item.getBatch_no() == null || item.getBatch_no().isEmpty()) {
+             throw new Exception("Batch_no is required");
          }
-         if (item.getWarranty() == null || item.getWarranty() <= 0) {
-             throw new Exception("Warranty must be positive");
+         if (item.getPurchase_date() == null || item.getPurchase_date().isEmpty()) {
+             throw new Exception("Purchase Date is Required");
          }
      }
 
