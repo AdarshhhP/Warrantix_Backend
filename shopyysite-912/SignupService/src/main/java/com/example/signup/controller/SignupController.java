@@ -104,8 +104,8 @@ public class SignupController {
 	
 	@GetMapping("/getallusers")
 	public UserListResponse getAllUsers( @RequestParam(defaultValue = "0") int page,
-	        @RequestParam(defaultValue = "10") int size){
-		return service.getAllUsers(page,size);
+	        @RequestParam(defaultValue = "10") int size,@RequestParam(required = false) String userType){
+		return service.getAllUsers(page,size,userType);
 	}
 	
 //	@PostMapping("/send")
@@ -121,5 +121,10 @@ public class SignupController {
 //            return ResponseEntity.status(500).body("Error sending email.");
 //        }
 //    }
+	
+	@GetMapping("/changeuser_status")
+	public Boolean ChangeUserStatus(@RequestParam Integer user_id,@RequestParam Integer actionstatus) {
+		return service.ChangeUserStatus(user_id,actionstatus);
+	}
 	
 }

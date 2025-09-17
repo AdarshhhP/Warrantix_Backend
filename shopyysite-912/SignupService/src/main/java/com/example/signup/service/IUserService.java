@@ -24,5 +24,6 @@ public interface IUserService {
 	public UserDetails GetUserDetails(Integer user_Id);
 	public List<UserInfoDTO> getUsernameByUserIds(@RequestBody List<Integer> user_Id);
 	public UserListResponse getAllUsers( @RequestParam(defaultValue = "0") int page,
-	        @RequestParam(defaultValue = "10") int size);
+	        @RequestParam(defaultValue = "10") int size,@RequestParam String userType);
+	public Boolean ChangeUserStatus(@RequestParam Integer user_id,@RequestParam Integer actionstatus);
 }

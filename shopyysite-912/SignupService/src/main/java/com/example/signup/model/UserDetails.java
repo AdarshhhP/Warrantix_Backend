@@ -29,9 +29,17 @@ public class UserDetails {
     private Integer userType;
     
 	private Integer is_deleted = 0;
+	
+	private Integer active_status;
 
 
-    public Integer getUser_id() {
+    public Integer getActive_status() {
+		return active_status;
+	}
+	public void setActive_status(Integer active_status) {
+		this.active_status = active_status;
+	}
+	public Integer getUser_id() {
 		return user_id;
 	}
 	public void setUser_id(Integer user_id) {

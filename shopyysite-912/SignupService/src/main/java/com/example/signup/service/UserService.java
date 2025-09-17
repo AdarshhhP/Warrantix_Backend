@@ -73,7 +73,7 @@ public class UserService implements IUserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
         LoginResponse obj=new LoginResponse();
         // Compare raw password with encoded password
-        if (passwordEncoder.matches(userDto.getPassword(), user.getPassword())) {
+        if (passwordEncoder.matches(userDto.getPassword(), user.getPassword()) && user.getActive_status() == 0) {
             String token = jwtUtil.generateToken(user.getEmail());
             System.out.println("JWT Token: " + token); // or return it in response
             obj.setJwt(token);
@@ -130,9 +130,15 @@ public class UserService implements IUserService {
 	}
 	
 	@Override
-	public UserListResponse getAllUsers(int page, int size) {
+	public UserListResponse getAllUsers(int page, int size, String userType) {
 	    Pageable pageable = PageRequest.of(page, size);
-	    Page<UserDetails> pagedResult = userRepository.findAll(pageable);
+	    Integer parsedUserType = null;
+
+	    if (userType != null && !userType.trim().isEmpty()) {
+	        parsedUserType = Integer.parseInt(userType.trim());
+	    }
+
+	    Page<UserDetails> pagedResult = userRepository.getAllUsers(pageable, parsedUserType);
 
 	    
 	    List<UserDetails> nonDeletedUsers = pagedResult.getContent().stream()
@@ -140,7 +146,7 @@ public class UserService implements IUserService {
 	            .collect(Collectors.toList());
 	    
 	    List<UserInfoUserType> userDTOs = nonDeletedUsers.stream()
-	            .map(user -> new UserInfoUserType(user.getUserName(), user.getEmail(), user.getUserType()))
+	            .map(user -> new UserInfoUserType(user.getUserName(), user.getEmail(), user.getUserType(),user.getUser_id(),user.getActive_status()))
 	            .collect(Collectors.toList());
 
 	    UserListResponse url = new UserListResponse();
@@ -153,7 +159,15 @@ public class UserService implements IUserService {
 
 	    return url;
 	}
-
-
+@Override
+@Transactional
+	public Boolean ChangeUserStatus(@RequestParam Integer user_id,@RequestParam Integer actionstatus) {
+		Integer p = userRepository.ChangeUserStatus(user_id,actionstatus);
+		if(p>0) {
+			return true;
+		}else {
+			return false;
+		}
+	}
 
 }
