@@ -34,6 +34,7 @@ public class SecurityConfig {
                     "/createuser",
                     "/getuserdetails",
                     "/getusername",
+                    "/changeuser_status",
                     "/getallusers",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
