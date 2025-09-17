@@ -5,9 +5,11 @@ import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -25,11 +27,37 @@ public interface ProductSerialRepository extends JpaRepository<ProductSerial, Lo
 			@Param("productId") Integer productId, 
 			Pageable pageable);
     
-	@Query("SELECT u FROM ProductSerial u WHERE u.serialNo IN :serialNos")
-    public List<ProductSerial> getDataBySerial(@RequestBody List<String> serialNos);
+ // With search filter
+    @Query("SELECT u FROM ProductSerial u " +
+           "WHERE u.product.prod_id = :productId " +
+           "AND u.is_sold = :is_sold " +
+           "AND (:serialNo IS NULL OR u.serialNo LIKE %:serialNo%)")
+    Page<ProductSerial> searchNotSoldSerials(
+            @Param("is_sold") Integer is_sold,
+            @Param("serialNo") String serialNo,
+            @Param("productId") Integer productId,
+            Pageable pageable);
+    
+    @Query("SELECT ps FROM ProductSerial ps " +
+    	       "JOIN BatchProductMap bpm ON ps.serialNo = bpm.serialNo " +
+    	       "JOIN bpm.batch b " +
+    	       "WHERE ps.product.prod_id = :productId " +
+    	       "AND ps.is_sold = :is_sold")
+    	Page<ProductSerial> getBatchedSerials(
+    	        @Param("is_sold") Integer is_sold,
+    	        @Param("productId") Integer productId,
+    	        Pageable pageable);
+
     
     boolean existsBySerialNo(String serialNo);
     
+    @Modifying(clearAutomatically = true, flushAutomatically = true) // mark this as an update query
+    @Transactional // ensure transaction boundary
+    @Query("UPDATE ProductSerial p SET p.is_sold = :status WHERE p.serialNo = :serialNo")
+    int updateSerialStatus(@Param("serialNo") String serialNo, @Param("status") Integer status);
+	@Query("SELECT u FROM ProductSerial u WHERE u.serialNo IN :serialNos")
+    public List<ProductSerial> getDataBySerial(@RequestBody List<String> serialNos);
+        
     @Query("Update ProductSerial p set p.is_sold = 1 where p.serialNo=:serialNo")
     public ProductSerial ChangeSerialstatus(@Param("serialNo") String serialNo);
 }

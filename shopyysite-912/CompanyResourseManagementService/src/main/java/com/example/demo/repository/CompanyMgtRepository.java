@@ -24,10 +24,11 @@ public interface CompanyMgtRepository extends JpaRepository<ProductDetails, Inte
 	        + "AND (:holderStatus IS NULL OR p.HolderStatus = :holderStatus)\r\n"
 			+ "AND (:productCategory IS NULL OR p.Product_category = :productCategory)\r\n"
 			+ "AND (:manDate IS NULL OR p.Man_date = :manDate)\r\n"
-		    + "AND (:modelNo IS NULL OR p.Model_no LIKE CONCAT('%', :modelNo, '%'))" 
+		    + "AND (:modelNo IS NULL OR p.Model_no LIKE CONCAT('%', :modelNo, '%'))\r\n"
+			+ "AND (:productName IS NULL OR p.Product_name LIKE CONCAT('%', :productName, '%'))"
 			)
 	 Page<ProductDetails> getProducts(@Param("companyId") Integer companyId,@Param("holderStatus") Integer holderStatus,
-		        @Param("productCategory") String productCategory,@Param("modelNo") String modelNo, @Param("manDate") LocalDate manDate,Pageable pageable
+		        @Param("productCategory") String productCategory,@Param("modelNo") String modelNo, @Param("productName") String productName,@Param("manDate") LocalDate manDate,Pageable pageable
 		    );
 	
 	//Get product details by model number.
