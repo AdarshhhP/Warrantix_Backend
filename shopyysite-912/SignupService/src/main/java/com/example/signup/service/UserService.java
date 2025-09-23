@@ -51,7 +51,7 @@ public class UserService implements IUserService {
         ud.setEmail(userPaylod.getEmail());
         ud.setPassword(userPaylod.getPassword());
         ud.setUserType(1);
-        // Save user to the database
+        ud.setActive_status(0);        // Save user to the database
         UserDetails savedUser = userRepository.save(ud);
         // Build response based on save success
         if (savedUser != null && savedUser.getUserId() != null) {
